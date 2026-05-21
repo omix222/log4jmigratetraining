@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>log4j マイグレーション教科書 — 1.x → 2.x 完全ガイド</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #0f1117;
+  --surface:   #1a1d27;
+  --surface2:  #22253a;
+  --border:    #2e3150;
+  --text:      #e2e4f0;
+  --text-dim:  #8b90b8;
+  --accent:    #7c6af7;
+  --accent2:   #5dc8e8;
+  --green:     #4ec994;
+  --yellow:    #f5c842;
+  --red:       #f76b6b;
+  --orange:    #f09342;
+  --sidebar-w: 270px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  --font-sans: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.75;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#sidebar-inner { padding: 24px 16px 40px; }
+.sidebar-logo {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo span { color: var(--text-dim); }
+.nav-section { margin-bottom: 20px; }
+.nav-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+}
+.nav-section a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.nav-section a:hover, .nav-section a.active {
+  background: var(--surface2);
+  color: var(--text);
+}
+.nav-section a.active { color: var(--accent2); }
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.badge-step1 { background: #3d2f1c; color: var(--orange); }
+.badge-step2 { background: #1e2f3d; color: var(--accent2); }
+.badge-step3 { background: #1e3329; color: var(--green); }
+.badge-step4 { background: #2d1e3d; color: var(--accent); }
+.badge-step5 { background: #3d341c; color: var(--yellow); }
+.badge-step6 { background: #3d1c1c; color: var(--red); }
+.badge-step7 { background: #1c2f3d; color: var(--accent2); }
+
+/* ===== Main ===== */
+#main {
+  flex: 1;
+  max-width: 860px;
+  padding: 48px 56px 80px;
+  min-width: 0;
+}
+
+/* ===== Typography ===== */
+h1 {
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 52px 0 16px;
+  padding-top: 52px;
+  border-top: 1px solid var(--border);
+}
+h2:first-of-type { border-top: none; padding-top: 0; margin-top: 32px; }
+h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent2);
+  margin: 32px 0 10px;
+}
+h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 20px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+p { margin-bottom: 14px; color: var(--text); }
+strong { color: var(--text); font-weight: 700; }
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  margin-bottom: 36px;
+}
+section { margin-bottom: 8px; }
+
+/* ===== Step Header ===== */
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.step-num {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.step-num.s1 { background: #3d2f1c; color: var(--orange); }
+.step-num.s2 { background: #1e2f3d; color: var(--accent2); }
+.step-num.s3 { background: #1e3329; color: var(--green); }
+.step-num.s4 { background: #2d1e3d; color: var(--accent); }
+.step-num.s5 { background: #3d341c; color: var(--yellow); }
+.step-num.s6 { background: #3d1c1c; color: var(--red); }
+.step-num.s7 { background: #1c2f3d; color: var(--accent2); }
+
+/* ===== Code Blocks ===== */
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 18px 0;
+  position: relative;
+}
+pre .lang-label {
+  position: absolute;
+  top: 10px; right: 14px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.845rem;
+  line-height: 1.65;
+}
+pre > code {
+  display: block;
+  padding: 20px 22px;
+}
+:not(pre) > code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.85em;
+  color: var(--accent2);
+}
+
+/* Syntax Highlighting */
+.kw { color: #c678dd; }
+.ty { color: #e5c07b; }
+.st { color: #98c379; }
+.cm { color: #5c6370; font-style: italic; }
+.an { color: #c678dd; }
+.nm { color: #e06c75; }
+.fn { color: #61afef; }
+.nu { color: var(--orange); }
+.op { color: #56b6c2; }
+.xml-tag { color: #e06c75; }
+.xml-attr { color: #e5c07b; }
+.xml-val { color: #98c379; }
+.xml-cm { color: #5c6370; font-style: italic; }
+.hi { background: rgba(124, 106, 247, 0.18); border-left: 3px solid var(--accent); padding-left: 2px; margin-left: -5px; }
+.hi-add { background: rgba(78, 201, 148, 0.12); border-left: 3px solid var(--green); padding-left: 2px; margin-left: -5px; }
+.hi-rm  { background: rgba(247, 107, 107, 0.12); border-left: 3px solid var(--red); padding-left: 2px; margin-left: -5px; }
+
+/* ===== Diff / Compare ===== */
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+.diff-box {}
+.diff-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.diff-label.before { background: rgba(247,107,107,0.18); color: var(--red); }
+.diff-label.after  { background: rgba(78,201,148,0.18);  color: var(--green); }
+.diff-box pre { margin: 0; border-radius: 0 0 10px 10px; }
+.diff-box pre > code { font-size: 0.8rem; }
+.diff-box.full-width pre > code { font-size: 0.82rem; }
+
+/* ===== Tables ===== */
+.table-wrap { overflow-x: auto; margin: 18px 0; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid var(--border);
+}
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+td code { font-size: 0.8rem; }
+
+/* ===== Callouts ===== */
+.callout {
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 18px 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.callout-body { flex: 1; }
+.callout-body strong { display: block; margin-bottom: 4px; }
+.callout-body p { margin-bottom: 0; font-size: 0.9rem; color: inherit; }
+.callout.warn {
+  background: rgba(245, 200, 66, 0.1);
+  border: 1px solid rgba(245, 200, 66, 0.3);
+  color: #f5d87a;
+}
+.callout.tip {
+  background: rgba(78, 201, 148, 0.1);
+  border: 1px solid rgba(78, 201, 148, 0.3);
+  color: #7ed8b2;
+}
+.callout.danger {
+  background: rgba(247, 107, 107, 0.1);
+  border: 1px solid rgba(247, 107, 107, 0.3);
+  color: #f49090;
+}
+.callout.info {
+  background: rgba(93, 200, 232, 0.1);
+  border: 1px solid rgba(93, 200, 232, 0.3);
+  color: #8fd8f0;
+}
+
+/* ===== Migration Flow ===== */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 24px 0;
+  flex-wrap: wrap;
+}
+.flow-node {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  flex: 1;
+  min-width: 100px;
+}
+.flow-node .step-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 2px;
+}
+.flow-node .step-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.flow-node.highlight-node { border-color: var(--accent); background: rgba(124,106,247,0.12); }
+.flow-arrow {
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* ===== Pill tags ===== */
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.pill-green { background: rgba(78,201,148,0.15); color: var(--green); border: 1px solid rgba(78,201,148,0.3); }
+.pill-red   { background: rgba(247,107,107,0.15); color: var(--red);   border: 1px solid rgba(247,107,107,0.3); }
+.pill-yellow{ background: rgba(245,200,66,0.15);  color: var(--yellow); border: 1px solid rgba(245,200,66,0.3); }
+.pill-blue  { background: rgba(93,200,232,0.15);  color: var(--accent2);border: 1px solid rgba(93,200,232,0.3); }
+.pill-purple{ background: rgba(124,106,247,0.15); color: var(--accent); border: 1px solid rgba(124,106,247,0.3); }
+
+/* ===== TOC in page ===== */
+.toc-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin: 28px 0;
+}
+.toc-box h4 { margin-top: 0; margin-bottom: 12px; }
+.toc-box ol { padding-left: 20px; }
+.toc-box li { margin-bottom: 4px; font-size: 0.9rem; }
+.toc-box a { color: var(--accent2); text-decoration: none; }
+.toc-box a:hover { text-decoration: underline; }
+
+/* ===== Hero ===== */
+.hero {
+  margin-bottom: 40px;
+}
+.hero-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+.path-node {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  text-align: center;
+}
+.path-node .pn-step { font-size: 0.65rem; color: var(--text-dim); font-weight: 700; text-transform: uppercase; display: block; }
+.path-node .pn-name { font-size: 0.85rem; font-weight: 700; }
+.path-sep { color: var(--text-dim); font-size: 1.2rem; }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ===== Print / Mobile ===== */
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #main { padding: 28px 24px; }
+  .diff-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav id="sidebar">
+  <div id="sidebar-inner">
+    <div class="sidebar-logo">log4j <span>Migration</span> Guide</div>
+    <div class="nav-section">
+      <div class="nav-section-label">はじめに</div>
+      <a href="#intro">概要と移行パス</a>
+      <a href="#why">なぜ移行するのか</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">移行ステップ</div>
+      <a href="#step1"><span class="nav-badge badge-step1">1</span>log4j 1.x の基本</a>
+      <a href="#step2"><span class="nav-badge badge-step2">2</span>ブリッジ移行</a>
+      <a href="#step3"><span class="nav-badge badge-step3">3</span>log4j 2.x ネイティブ</a>
+      <a href="#step4"><span class="nav-badge badge-step4">4</span>SLF4J ファサード</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">自動化ツール</div>
+      <a href="#step5"><span class="nav-badge badge-step5">5</span>OpenRewrite</a>
+      <a href="#step6"><span class="nav-badge badge-step6">6</span>ConfigConverter</a>
+      <a href="#step7"><span class="nav-badge badge-step7">7</span>farnetto converter</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">リファレンス</div>
+      <a href="#pitfalls">よくある落とし穴</a>
+      <a href="#cheatsheet">API チートシート</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main id="main">
+
+<!-- Hero -->
+<div class="hero">
+  <h1>log4j マイグレーション<br>完全教科書</h1>
+  <p class="subtitle">log4j 1.x から log4j 2.x へ — 7 ステップで学ぶ移行の全技法</p>
+  <div class="hero-path">
+    <div class="path-node"><span class="pn-step">Step 1</span><span class="pn-name" style="color:var(--orange)">log4j 1.x</span></div>
+    <span class="path-sep">→</span>
+    <div class="path-node"><span class="pn-step">Step 2</span><span class="pn-name" style="color:var(--accent2)">ブリッジ</span></div>
+    <span class="path-sep">→</span>
+    <div class="path-node"><span class="pn-step">Step 3</span><span class="pn-name" style="color:var(--green)">log4j 2.x</span></div>
+    <span class="path-sep">→</span>
+    <div class="path-node"><span class="pn-step">Step 4</span><span class="pn-name" style="color:var(--accent)">SLF4J</span></div>
+    <span class="path-sep" style="margin-left:8px;font-size:0.85rem;color:var(--text-dim)">自動化:</span>
+    <div class="path-node"><span class="pn-step">Step 5</span><span class="pn-name" style="color:var(--yellow)">OpenRewrite</span></div>
+    <div class="path-node"><span class="pn-step">Step 6-7</span><span class="pn-name" style="color:var(--red)">Config変換</span></div>
+  </div>
+</div>
+
+<!-- ===== INTRO ===== -->
+<section id="intro">
+<h2>概要と移行パス</h2>
+
+<div class="toc-box">
+  <h4>目次</h4>
+  <ol>
+    <li><a href="#why">なぜ log4j 1.x から移行するのか</a></li>
+    <li><a href="#step1">Step 1 — log4j 1.x の基本を理解する</a></li>
+    <li><a href="#step2">Step 2 — ブリッジ移行（コード変更ゼロ）</a></li>
+    <li><a href="#step3">Step 3 — log4j 2.x ネイティブ API への完全移行</a></li>
+    <li><a href="#step4">Step 4 — SLF4J ファサードでベストプラクティス</a></li>
+    <li><a href="#step5">Step 5 — OpenRewrite で Java コードを自動変換</a></li>
+    <li><a href="#step6">Step 6 — Log4j1ConfigurationConverter で設定ファイルを変換</a></li>
+    <li><a href="#step7">Step 7 — farnetto/log4jconverter で XML 設定ファイルを変換</a></li>
+    <li><a href="#pitfalls">よくある落とし穴と対処法</a></li>
+    <li><a href="#cheatsheet">API チートシート</a></li>
+  </ol>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr><th>Step</th><th>依存ライブラリ</th><th>import</th><th>設定ファイル</th><th>目的</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><span class="pill pill-yellow">1</span></td>
+  <td><code>log4j:log4j:1.2.17</code></td>
+  <td><code>org.apache.log4j.*</code></td>
+  <td><code>log4j.properties</code></td>
+  <td>EOL 済み・CVE あり (移行前)</td>
+</tr>
+<tr>
+  <td><span class="pill pill-blue">2</span></td>
+  <td><code>log4j-1.2-api</code> + <code>log4j-core</code></td>
+  <td><code>org.apache.log4j.*</code> (変更なし)</td>
+  <td><code>log4j2.xml</code></td>
+  <td>コード変更ゼロで 2.x バックエンド</td>
+</tr>
+<tr>
+  <td><span class="pill pill-green">3</span></td>
+  <td><code>log4j-api</code> + <code>log4j-core</code></td>
+  <td><code>org.apache.logging.log4j.*</code></td>
+  <td><code>log4j2.xml</code></td>
+  <td>完全移行・新機能フル活用</td>
+</tr>
+<tr>
+  <td><span class="pill pill-purple">4</span></td>
+  <td><code>slf4j-api</code> + <code>log4j-slf4j2-impl</code></td>
+  <td><code>org.slf4j.*</code></td>
+  <td><code>log4j2.xml</code></td>
+  <td>実装非依存のベストプラクティス</td>
+</tr>
+<tr>
+  <td><span class="pill pill-yellow">5</span></td>
+  <td><code>rewrite-maven-plugin</code></td>
+  <td>— (変換ツール)</td>
+  <td><code>log4j.properties</code></td>
+  <td>Java コード自動変換</td>
+</tr>
+<tr>
+  <td><span class="pill pill-red">6</span></td>
+  <td><code>log4j-1.2-api</code></td>
+  <td>— (変換ツール)</td>
+  <td><code>log4j-complex.properties</code></td>
+  <td>properties 設定ファイル自動変換</td>
+</tr>
+<tr>
+  <td><span class="pill pill-blue">7</span></td>
+  <td><code>jaxb-api</code> + <code>jaxb-impl</code></td>
+  <td>— (変換ツール)</td>
+  <td><code>log4j-complex.xml</code></td>
+  <td>XML 設定ファイル自動変換</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ===== WHY ===== -->
+<section id="why">
+<h2>なぜ log4j 1.x から移行するのか</h2>
+
+<div class="callout danger">
+  <span class="callout-icon">🚨</span>
+  <div class="callout-body">
+    <strong>log4j 1.x は 2015 年 8 月に EOL（End of Life）</strong>
+    <p>CVE-2019-17571 を含む複数の脆弱性が修正されないまま放置されています。プロダクション環境での使用は危険です。</p>
+  </div>
+</div>
+
+<h3>log4j 2.x の主な改善点</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>機能</th><th>log4j 1.x</th><th>log4j 2.x</th></tr></thead>
+<tbody>
+<tr><td>パラメータ化ログ</td><td>文字列結合 / <code>isDebugEnabled()</code> 必須</td><td><code>{}</code> プレースホルダーで遅延評価</td></tr>
+<tr><td>非同期ロギング</td><td>なし</td><td>AsyncLogger (LMAX Disruptor)・高スループット</td></tr>
+<tr><td>設定リロード</td><td>不可</td><td><code>monitorInterval</code> で無停止リロード</td></tr>
+<tr><td>構造化ログ</td><td>なし</td><td><code>MapMessage</code>・<code>JsonTemplateLayout</code></td></tr>
+<tr><td>Lookup</td><td>なし</td><td><code>${env:VAR}</code>・<code>${ctx:key}</code> 等</td></tr>
+<tr><td>フィルタ</td><td>限定的</td><td>Marker・Threshold・Regex フィルタ等</td></tr>
+<tr><td>セキュリティ</td><td>脆弱性あり (EOL)</td><td>積極的にメンテされ CVE 対応</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ===== STEP 1 ===== -->
+<section id="step1">
+<h2>
+  <div class="step-header">
+    <div class="step-num s1">1</div>
+    <div>log4j 1.x の基本を理解する</div>
+  </div>
+</h2>
+
+<p>まず移行元の log4j 1.x コードを理解します。移行後に「何が変わったのか」を対比するための基準点です。</p>
+
+<h3>Logger の取得と基本的な使い方</h3>
+<pre><code class="language-java"><span class="hi-rm">import org.apache.log4j.Logger;</span>
+<span class="hi-rm">import org.apache.log4j.MDC;</span>
+
+<span class="kw">public class</span> <span class="ty">OrderService</span> {
+
+    <span class="cm">// log4j 1.x: Logger.getLogger(Class) で取得</span>
+    <span class="kw">private static final</span> <span class="ty">Logger</span> logger = <span class="ty">Logger</span>.<span class="fn">getLogger</span>(<span class="ty">OrderService</span>.<span class="kw">class</span>);
+
+    <span class="kw">public void</span> <span class="fn">placeOrder</span>(<span class="ty">String</span> orderId, <span class="ty">String</span> customerId, <span class="kw">int</span> amount) {
+        <span class="cm">// MDC: リクエストスコープの情報を全ログに付加</span>
+        <span class="ty">MDC</span>.<span class="fn">put</span>(<span class="st">"orderId"</span>, orderId);
+        <span class="ty">MDC</span>.<span class="fn">put</span>(<span class="st">"customerId"</span>, customerId);
+
+        logger.<span class="fn">info</span>(<span class="st">"注文処理を開始します"</span>);
+
+        <span class="cm">// ⚠ 1.x では {} プレースホルダーが使えない</span>
+        <span class="cm">// → 文字列結合 または isXxxEnabled() ガードが必要</span>
+        <span class="kw">if</span> (logger.<span class="fn">isDebugEnabled</span>()) {
+            logger.<span class="fn">debug</span>(<span class="st">"注文詳細: orderId="</span> + orderId + <span class="st">", amount="</span> + amount);
+        }
+
+        <span class="kw">try</span> {
+            <span class="fn">validateOrder</span>(orderId, amount);
+            logger.<span class="fn">info</span>(<span class="st">"注文が正常に完了しました"</span>);
+        } <span class="kw">catch</span> (<span class="ty">Exception</span> e) {
+            logger.<span class="fn">error</span>(<span class="st">"注文処理中にエラーが発生"</span>, e);
+        } <span class="kw">finally</span> {
+            <span class="cm">// ⚠ スレッドプール汚染防止のため必ずクリアすること</span>
+            <span class="ty">MDC</span>.<span class="fn">remove</span>(<span class="st">"orderId"</span>);
+            <span class="ty">MDC</span>.<span class="fn">remove</span>(<span class="st">"customerId"</span>);
+        }
+    }
+}</code></pre>
+
+<h3>FATAL レベルと PaymentService</h3>
+<pre><code class="language-java"><span class="kw">public class</span> <span class="ty">PaymentService</span> {
+    <span class="kw">private static final</span> <span class="ty">Logger</span> logger = <span class="ty">Logger</span>.<span class="fn">getLogger</span>(<span class="ty">PaymentService</span>.<span class="kw">class</span>);
+
+    <span class="kw">public boolean</span> <span class="fn">charge</span>(<span class="ty">String</span> paymentId, <span class="kw">int</span> amount) {
+        <span class="kw">if</span> (amount > <span class="nu">1_000_000</span>) {
+            <span class="cm">// log4j 1.x の FATAL — 「アプリ続行不可」を示す</span>
+            <span class="cm">// 2.x 移行後は ERROR で代替するのが推奨</span>
+            logger.<span class="fn">fatal</span>(<span class="st">"決済上限超過。不正な取引の可能性: amount="</span> + amount);
+            <span class="kw">return false</span>;
+        }
+        <span class="cm">// ...</span>
+    }
+}</code></pre>
+
+<h3>log4j.properties の書き方</h3>
+<pre><code class="language-properties"><span class="cm"># ルートロガー: DEBUG 以上を Console と File へ出力</span>
+log4j.rootLogger=DEBUG, Console, File
+
+<span class="cm"># ConsoleAppender の設定</span>
+log4j.appender.Console=org.apache.log4j.ConsoleAppender
+log4j.appender.Console.Target=System.out
+log4j.appender.Console.layout=org.apache.log4j.PatternLayout
+<span class="cm"># %X{key} で MDC の値を出力できる</span>
+log4j.appender.Console.layout.ConversionPattern=<span class="st">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{1} [orderId=%X{orderId}] - %m%n</span>
+
+<span class="cm"># FileAppender の設定</span>
+log4j.appender.File=org.apache.log4j.FileAppender
+log4j.appender.File.File=target/step1-log4j1.log
+log4j.appender.File.Append=false
+log4j.appender.File.layout=org.apache.log4j.PatternLayout
+log4j.appender.File.layout.ConversionPattern=<span class="st">%d{ISO8601} [%t] %-5p %c - %m%n</span>
+
+<span class="cm"># 特定パッケージのレベルを上書き</span>
+log4j.logger.com.example=DEBUG</code></pre>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <strong>1.x の代表的な問題点</strong>
+    <p>① <code>isDebugEnabled()</code> を忘れると DEBUG 無効時も文字列結合が実行されムダな CPU コストがかかる。②  MDC をクリアし忘れるとスレッドプール環境で前のリクエストの情報が次のリクエストに混入する。</p>
+  </div>
+</div>
+
+<h4>実行コマンド</h4>
+<pre><code>mvn -pl step1-log4j1 exec:java</code></pre>
+</section>
+
+<!-- ===== STEP 2 ===== -->
+<section id="step2">
+<h2>
+  <div class="step-header">
+    <div class="step-num s2">2</div>
+    <div>ブリッジ移行（コード変更ゼロ）</div>
+  </div>
+</h2>
+
+<p>Java ソースを一切変えずに、バックエンドを log4j 2.x に切り替えます。<strong>リスクを最小化した第一歩</strong>として有効な手法です。</p>
+
+<h3>pom.xml の変更だけで移行</h3>
+<div class="diff-grid">
+<div class="diff-box">
+  <div class="diff-label before">&#9888; Step 1 — log4j 1.x</div>
+  <pre><code class="language-xml"><span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>log4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>log4j<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;version&gt;</span>1.2.17<span class="xml-tag">&lt;/version&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span></code></pre>
+</div>
+<div class="diff-box">
+  <div class="diff-label after">✓ Step 2 — ブリッジ</div>
+  <pre><code class="language-xml"><span class="hi-add"><span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>org.apache.logging.log4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>log4j-1.2-api<span class="xml-tag">&lt;/artifactId&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>org.apache.logging.log4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>log4j-core<span class="xml-tag">&lt;/artifactId&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span></span></code></pre>
+</div>
+</div>
+
+<div class="callout danger">
+  <span class="callout-icon">🚨</span>
+  <div class="callout-body">
+    <strong>log4j.properties は自動的に無視される</strong>
+    <p>log4j 2.x バックエンドは <code>log4j.properties</code> を読み込みません。<strong>必ず <code>log4j2.xml</code>（または <code>log4j2.json</code>）を作成</strong>してください。</p>
+  </div>
+</div>
+
+<h3>log4j2.xml の作成（新規ファイル）</h3>
+<pre><code class="language-xml"><span class="xml-tag">&lt;?xml version=<span class="xml-val">"1.0"</span> encoding=<span class="xml-val">"UTF-8"</span>?&gt;</span>
+<span class="xml-tag">&lt;Configuration</span> <span class="xml-attr">status</span>=<span class="xml-val">"WARN"</span> <span class="xml-attr">monitorInterval</span>=<span class="xml-val">"30"</span><span class="xml-tag">&gt;</span>
+
+  <span class="xml-tag">&lt;Appenders&gt;</span>
+    <span class="xml-tag">&lt;Console</span> <span class="xml-attr">name</span>=<span class="xml-val">"Console"</span> <span class="xml-attr">target</span>=<span class="xml-val">"SYSTEM_OUT"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;PatternLayout</span> <span class="xml-attr">pattern</span>=<span class="xml-val">"%d{HH:mm:ss} [%t] %-5level %logger{1} [%X{orderId}] - %msg%n"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Console&gt;</span>
+
+    <span class="xml-cm">&lt;!-- RollingFile: 1.x の FileAppender より高機能な後継 --&gt;</span>
+    <span class="xml-tag">&lt;RollingFile</span> <span class="xml-attr">name</span>=<span class="xml-val">"RollingFile"</span>
+                 <span class="xml-attr">fileName</span>=<span class="xml-val">"target/app.log"</span>
+                 <span class="xml-attr">filePattern</span>=<span class="xml-val">"target/app-%d{yyyy-MM-dd}-%i.log.gz"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;JsonTemplateLayout/&gt;</span>   <span class="xml-cm">&lt;!-- 構造化 JSON ログ --&gt;</span>
+      <span class="xml-tag">&lt;Policies&gt;</span>
+        <span class="xml-tag">&lt;SizeBasedTriggeringPolicy</span> <span class="xml-attr">size</span>=<span class="xml-val">"10 MB"</span><span class="xml-tag">/&gt;</span>
+        <span class="xml-tag">&lt;TimeBasedTriggeringPolicy</span> <span class="xml-attr">interval</span>=<span class="xml-val">"1"</span><span class="xml-tag">/&gt;</span>
+      <span class="xml-tag">&lt;/Policies&gt;</span>
+      <span class="xml-tag">&lt;DefaultRolloverStrategy</span> <span class="xml-attr">max</span>=<span class="xml-val">"7"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/RollingFile&gt;</span>
+  <span class="xml-tag">&lt;/Appenders&gt;</span>
+
+  <span class="xml-tag">&lt;Loggers&gt;</span>
+    <span class="xml-tag">&lt;Logger</span> <span class="xml-attr">name</span>=<span class="xml-val">"com.example"</span> <span class="xml-attr">level</span>=<span class="xml-val">"DEBUG"</span> <span class="xml-attr">additivity</span>=<span class="xml-val">"false"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;AppenderRef</span> <span class="xml-attr">ref</span>=<span class="xml-val">"Console"</span><span class="xml-tag">/&gt;</span>
+      <span class="xml-tag">&lt;AppenderRef</span> <span class="xml-attr">ref</span>=<span class="xml-val">"RollingFile"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Logger&gt;</span>
+    <span class="xml-tag">&lt;Root</span> <span class="xml-attr">level</span>=<span class="xml-val">"WARN"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;AppenderRef</span> <span class="xml-attr">ref</span>=<span class="xml-val">"Console"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Root&gt;</span>
+  <span class="xml-tag">&lt;/Loggers&gt;</span>
+
+<span class="xml-tag">&lt;/Configuration&gt;</span></code></pre>
+
+<div class="callout tip">
+  <span class="callout-icon">💡</span>
+  <div class="callout-body">
+    <strong>JsonTemplateLayout を使う場合は追加依存が必要</strong>
+    <p><code>log4j-core</code> には含まれていません。<code>log4j-layout-template-json</code> を依存に追加してください。</p>
+  </div>
+</div>
+
+<h4>実行コマンド</h4>
+<pre><code>mvn -pl step2-bridge exec:java</code></pre>
+</section>
+
+<!-- ===== STEP 3 ===== -->
+<section id="step3">
+<h2>
+  <div class="step-header">
+    <div class="step-num s3">3</div>
+    <div>log4j 2.x ネイティブ API への完全移行</div>
+  </div>
+</h2>
+
+<p>コードを log4j 2.x の API に書き直します。パフォーマンスが向上し、新機能をフル活用できます。</p>
+
+<h3>Java コードの変更点</h3>
+<div class="diff-grid">
+<div class="diff-box">
+  <div class="diff-label before">&#9888; Step 1 — log4j 1.x</div>
+  <pre><code class="language-java"><span class="hi-rm">import org.apache.log4j.Logger;</span>
+<span class="hi-rm">import org.apache.log4j.MDC;</span>
+
+<span class="kw">private static final</span> <span class="ty">Logger</span> logger =
+    <span class="hi-rm"><span class="ty">Logger</span>.<span class="fn">getLogger</span>(<span class="ty">OrderService</span>.<span class="kw">class</span>);</span>
+
+<span class="hi-rm"><span class="ty">MDC</span>.<span class="fn">put</span>(<span class="st">"orderId"</span>, orderId);</span>
+
+<span class="cm">// ガードが必要</span>
+<span class="kw">if</span> (logger.<span class="fn">isDebugEnabled</span>()) {
+    logger.<span class="fn">debug</span>(<span class="st">"orderId="</span> + orderId);
+}</code></pre>
+</div>
+<div class="diff-box">
+  <div class="diff-label after">✓ Step 3 — log4j 2.x</div>
+  <pre><code class="language-java"><span class="hi-add">import org.apache.logging.log4j.LogManager;</span>
+<span class="hi-add">import org.apache.logging.log4j.Logger;</span>
+<span class="hi-add">import org.apache.logging.log4j.ThreadContext;</span>
+
+<span class="kw">private static final</span> <span class="ty">Logger</span> logger =
+    <span class="hi-add"><span class="ty">LogManager</span>.<span class="fn">getLogger</span>(<span class="ty">OrderService</span>.<span class="kw">class</span>);</span>
+
+<span class="hi-add"><span class="ty">ThreadContext</span>.<span class="fn">put</span>(<span class="st">"orderId"</span>, orderId);</span>
+
+<span class="cm">// {} プレースホルダー — ガード不要</span>
+logger.<span class="fn">debug</span>(<span class="st">"orderId={}"</span>, orderId);</code></pre>
+</div>
+</div>
+
+<h3>新機能: ラムダによる遅延評価</h3>
+<pre><code class="language-java"><span class="cm">// DEBUG が無効なら getDetailedInfo() は呼ばれない (コスト不要)</span>
+logger.<span class="fn">info</span>(() -> <span class="st">"決済成功: 詳細="</span> + <span class="fn">getDetailedInfo</span>(paymentId));</code></pre>
+
+<h3>新機能: MapMessage で構造化ログ</h3>
+<pre><code class="language-java"><span class="kw">import</span> org.apache.logging.log4j.message.<span class="ty">MapMessage</span>;
+
+<span class="ty">MapMessage</span>&lt;?, ?&gt; msg = <span class="kw">new</span> <span class="ty">MapMessage</span>&lt;&gt;()
+        .<span class="fn">with</span>(<span class="st">"event"</span>,      <span class="st">"order.placed"</span>)
+        .<span class="fn">with</span>(<span class="st">"orderId"</span>,    orderId)
+        .<span class="fn">with</span>(<span class="st">"customerId"</span>, customerId)
+        .<span class="fn">with</span>(<span class="st">"amount"</span>,     <span class="ty">String</span>.<span class="fn">valueOf</span>(amount));
+logger.<span class="fn">info</span>(msg);
+<span class="cm">// JsonTemplateLayout と組み合わせると JSON フィールドとして出力される</span></code></pre>
+
+<h3>log4j2.xml の新機能</h3>
+<pre><code class="language-xml"><span class="xml-cm">&lt;!-- monitorInterval: 設定ファイルを無停止でリロード (秒単位) --&gt;</span>
+<span class="xml-tag">&lt;Configuration</span> <span class="xml-attr">status</span>=<span class="xml-val">"WARN"</span> <span class="xml-attr">monitorInterval</span>=<span class="xml-val">"30"</span><span class="xml-tag">&gt;</span>
+
+  <span class="xml-tag">&lt;Properties&gt;</span>
+    <span class="xml-cm">&lt;!-- 設定内で変数として再利用できる --&gt;</span>
+    <span class="xml-tag">&lt;Property</span> <span class="xml-attr">name</span>=<span class="xml-val">"LOG_DIR"</span><span class="xml-tag">&gt;</span>target<span class="xml-tag">&lt;/Property&gt;</span>
+  <span class="xml-tag">&lt;/Properties&gt;</span>
+
+  <span class="xml-tag">&lt;Appenders&gt;</span>
+    <span class="xml-cm">&lt;!-- JsonTemplateLayout: Elasticsearch / Splunk に流しやすい構造化ログ --&gt;</span>
+    <span class="xml-tag">&lt;RollingFile</span> <span class="xml-attr">name</span>=<span class="xml-val">"JsonFile"</span>
+                 <span class="xml-attr">fileName</span>=<span class="xml-val">"${LOG_DIR}/app.jsonl"</span>
+                 <span class="xml-attr">filePattern</span>=<span class="xml-val">"${LOG_DIR}/app-%d{yyyy-MM-dd}-%i.jsonl.gz"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;JsonTemplateLayout/&gt;</span>
+      <span class="xml-tag">&lt;Policies&gt;</span>
+        <span class="xml-tag">&lt;SizeBasedTriggeringPolicy</span> <span class="xml-attr">size</span>=<span class="xml-val">"10 MB"</span><span class="xml-tag">/&gt;</span>
+      <span class="xml-tag">&lt;/Policies&gt;</span>
+    <span class="xml-tag">&lt;/RollingFile&gt;</span>
+
+    <span class="xml-cm">&lt;!-- 非同期 Appender: ロギングを別スレッドに委譲 --&gt;</span>
+    <span class="xml-tag">&lt;Async</span> <span class="xml-attr">name</span>=<span class="xml-val">"AsyncConsole"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;AppenderRef</span> <span class="xml-attr">ref</span>=<span class="xml-val">"Console"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Async&gt;</span>
+  <span class="xml-tag">&lt;/Appenders&gt;</span>
+<span class="xml-tag">&lt;/Configuration&gt;</span></code></pre>
+
+<h4>実行コマンド</h4>
+<pre><code>mvn -pl step3-log4j2-native exec:java</code></pre>
+</section>
+
+<!-- ===== STEP 4 ===== -->
+<section id="step4">
+<h2>
+  <div class="step-header">
+    <div class="step-num s4">4</div>
+    <div>SLF4J ファサードでベストプラクティス</div>
+  </div>
+</h2>
+
+<p>SLF4J (Simple Logging Facade for Java) はロギング実装を抽象化するファサードです。アプリケーションコードを特定の実装ライブラリ（log4j2/logback）に依存させない<strong>業界標準のベストプラクティス</strong>です。</p>
+
+<h3>pom.xml の依存関係</h3>
+<pre><code class="language-xml"><span class="cm">&lt;!-- コンパイル依存: API のみ —— 実装を意識しないコードを書く --&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>org.slf4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>slf4j-api<span class="xml-tag">&lt;/artifactId&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- ランタイム依存: SLF4J → log4j2 へのブリッジ --&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>org.apache.logging.log4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-attr">&lt;!-- SLF4J 2.x 用: slf4j<span class="xml-val">2</span>-impl。1.x 用の slf4j-impl と混同しないこと --&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>log4j-slf4j2-impl<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;scope&gt;</span>runtime<span class="xml-tag">&lt;/scope&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span></code></pre>
+
+<h3>Java コードの変更点</h3>
+<div class="diff-grid">
+<div class="diff-box">
+  <div class="diff-label before">&#9888; Step 3 — log4j 2.x ネイティブ</div>
+  <pre><code class="language-java"><span class="hi-rm">import org.apache.logging.log4j.LogManager;</span>
+<span class="hi-rm">import org.apache.logging.log4j.Logger;</span>
+<span class="hi-rm">import org.apache.logging.log4j.ThreadContext;</span>
+
+<span class="kw">private static final</span> <span class="ty">Logger</span> logger =
+    <span class="hi-rm"><span class="ty">LogManager</span>.<span class="fn">getLogger</span>(<span class="ty">OrderService</span>.<span class="kw">class</span>);</span>
+
+<span class="hi-rm"><span class="ty">ThreadContext</span>.<span class="fn">put</span>(<span class="st">"key"</span>, value);</span>
+<span class="hi-rm"><span class="ty">ThreadContext</span>.<span class="fn">remove</span>(<span class="st">"key"</span>);</span></code></pre>
+</div>
+<div class="diff-box">
+  <div class="diff-label after">✓ Step 4 — SLF4J</div>
+  <pre><code class="language-java"><span class="hi-add">import org.slf4j.Logger;</span>
+<span class="hi-add">import org.slf4j.LoggerFactory;</span>
+<span class="hi-add">import org.slf4j.MDC;</span>
+
+<span class="kw">private static final</span> <span class="ty">Logger</span> logger =
+    <span class="hi-add"><span class="ty">LoggerFactory</span>.<span class="fn">getLogger</span>(<span class="ty">OrderService</span>.<span class="kw">class</span>);</span>
+
+<span class="hi-add"><span class="ty">MDC</span>.<span class="fn">put</span>(<span class="st">"key"</span>, value);</span>
+<span class="hi-add"><span class="ty">MDC</span>.<span class="fn">remove</span>(<span class="st">"key"</span>);</span></code></pre>
+</div>
+</div>
+
+<h3>SLF4J 2.x の Fluent API</h3>
+<pre><code class="language-java"><span class="cm">// atInfo() + addKeyValue() で構造化ログを簡潔に書ける</span>
+logger.<span class="fn">atInfo</span>()
+      .<span class="fn">addKeyValue</span>(<span class="st">"event"</span>,      <span class="st">"order.placed"</span>)
+      .<span class="fn">addKeyValue</span>(<span class="st">"orderId"</span>,    orderId)
+      .<span class="fn">addKeyValue</span>(<span class="st">"customerId"</span>, customerId)
+      .<span class="fn">addKeyValue</span>(<span class="st">"amount"</span>,     amount)
+      .<span class="fn">log</span>(<span class="st">"注文を受け付けました"</span>);</code></pre>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <strong>SLF4J バージョンとブリッジ名の対応を間違えないこと</strong>
+    <p>SLF4J 2.x → <code>log4j-slf4j<strong>2</strong>-impl</code>　　SLF4J 1.x → <code>log4j-slf4j-impl</code>（数字の位置が違う）。混在させると <code>SLF4J: No SLF4J providers were found.</code> エラーになります。</p>
+  </div>
+</div>
+
+<div class="callout tip">
+  <span class="callout-icon">💡</span>
+  <div class="callout-body">
+    <strong>SLF4J を選ぶ理由</strong>
+    <p>ライブラリ開発者は SLF4J を使うべきです。アプリ開発者もロギング実装の選択を <code>pom.xml</code> 1 行で切り替えられるため、将来 logback へ移行する場合もコード変更が不要です。</p>
+  </div>
+</div>
+
+<h4>実行コマンド</h4>
+<pre><code>mvn -pl step4-slf4j exec:java</code></pre>
+</section>
+
+<!-- ===== STEP 5 ===== -->
+<section id="step5">
+<h2>
+  <div class="step-header">
+    <div class="step-num s5">5</div>
+    <div>OpenRewrite で Java コードを自動変換</div>
+  </div>
+</h2>
+
+<p>OpenRewrite は AST（抽象構文木）ベースのリファクタリングツールです。<strong>Java ソースコードを機械的に変換</strong>するレシピを適用します。</p>
+
+<h3>pom.xml の設定</h3>
+<pre><code class="language-xml"><span class="xml-tag">&lt;plugin&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>org.openrewrite.maven<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>rewrite-maven-plugin<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;version&gt;</span>5.42.0<span class="xml-tag">&lt;/version&gt;</span>
+  <span class="xml-tag">&lt;configuration&gt;</span>
+    <span class="xml-tag">&lt;activeRecipes&gt;</span>
+      <span class="xml-cm">&lt;!-- log4j 1.x → log4j 2.x に変換するレシピ --&gt;</span>
+      <span class="xml-tag">&lt;recipe&gt;</span>org.openrewrite.java.logging.log4j.Log4j1ToLog4j2<span class="xml-tag">&lt;/recipe&gt;</span>
+      <span class="xml-cm">&lt;!-- SLF4J に移行したい場合はこちらに変更: --&gt;</span>
+      <span class="xml-cm">&lt;!-- &lt;recipe&gt;org.openrewrite.java.logging.slf4j.Log4j1ToSlf4j&lt;/recipe&gt; --&gt;</span>
+    <span class="xml-tag">&lt;/activeRecipes&gt;</span>
+  <span class="xml-tag">&lt;/configuration&gt;</span>
+  <span class="xml-tag">&lt;dependencies&gt;</span>
+    <span class="xml-tag">&lt;dependency&gt;</span>
+      <span class="xml-tag">&lt;groupId&gt;</span>org.openrewrite.recipe<span class="xml-tag">&lt;/groupId&gt;</span>
+      <span class="xml-tag">&lt;artifactId&gt;</span>rewrite-logging-frameworks<span class="xml-tag">&lt;/artifactId&gt;</span>
+      <span class="xml-tag">&lt;version&gt;</span>2.14.0<span class="xml-tag">&lt;/version&gt;</span>
+    <span class="xml-tag">&lt;/dependency&gt;</span>
+  <span class="xml-tag">&lt;/dependencies&gt;</span>
+<span class="xml-tag">&lt;/plugin&gt;</span></code></pre>
+
+<h3>レシピが変換する内容</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>変換前 (log4j 1.x)</th><th>変換後 (log4j 2.x)</th></tr></thead>
+<tbody>
+<tr><td><code>import org.apache.log4j.Logger</code></td><td><code>import org.apache.logging.log4j.Logger</code></td></tr>
+<tr><td><code>Logger.getLogger(Clazz)</code></td><td><code>LogManager.getLogger(Clazz)</code></td></tr>
+<tr><td><code>import org.apache.log4j.MDC</code></td><td><code>import org.apache.logging.log4j.ThreadContext</code></td></tr>
+<tr><td><code>MDC.put(k, v)</code></td><td><code>ThreadContext.put(k, v)</code></td></tr>
+<tr><td><code>MDC.remove(k)</code></td><td><code>ThreadContext.remove(k)</code></td></tr>
+<tr><td><code>isDebugEnabled() + "x=" + x</code></td><td><code>logger.debug("x={}", x)</code></td></tr>
+<tr><td><code>log4j:log4j</code> (pom.xml)</td><td><code>log4j-api</code> + <code>log4j-core</code> に置換</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>実行方法</h3>
+<pre><code><span class="cm"># JDK 21 以下が必要！ (Java 25 では NoClassDefFoundError が発生する)</span>
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+
+<span class="cm"># ドライラン: ファイルを変更せずに差分を確認</span>
+mvn -pl step5-openrewrite rewrite:dryRun
+cat step5-openrewrite/target/rewrite/rewrite.patch
+
+<span class="cm"># 実際に適用 (ファイルが書き換えられる)</span>
+mvn -pl step5-openrewrite rewrite:run</code></pre>
+
+<div class="callout danger">
+  <span class="callout-icon">🚨</span>
+  <div class="callout-body">
+    <strong>Java 25 では Java ソース変換が失敗する</strong>
+    <p>OpenRewrite は内部で <code>com.sun.tools.javac.*</code> を使いますが、このクラスは Java 25 で削除されています。<strong>JDK 21 以下で実行</strong>してください。<code>pom.xml</code> の依存更新は Java 25 でも動作します。</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== STEP 6 ===== -->
+<section id="step6">
+<h2>
+  <div class="step-header">
+    <div class="step-num s6">6</div>
+    <div>Log4j1ConfigurationConverter で設定ファイルを変換</div>
+  </div>
+</h2>
+
+<p><code>log4j-1.2-api</code> に内包される公式ツール。<strong><code>log4j.properties</code> ファイルを <code>log4j2.xml</code> に自動変換</strong>します。</p>
+
+<h3>使い方</h3>
+<pre><code><span class="cm"># Maven exec プラグイン経由で実行</span>
+mvn -pl step6-config-converter exec:java@convert-properties
+
+<span class="cm"># 出力を確認</span>
+cat step6-config-converter/target/log4j2-from-properties.xml</code></pre>
+
+<h3>変換元 log4j.properties（抜粋）</h3>
+<pre><code class="language-properties"><span class="cm"># ルートロガー</span>
+log4j.rootLogger=INFO, Console, RollingFile
+
+<span class="cm"># ConsoleAppender</span>
+log4j.appender.Console=org.apache.log4j.ConsoleAppender
+log4j.appender.Console.layout=org.apache.log4j.PatternLayout
+log4j.appender.Console.layout.ConversionPattern=<span class="st">%d{HH:mm:ss.SSS} [%t] %-5p %c{1} [%X{orderId}] - %m%n</span>
+
+<span class="cm"># RollingFileAppender</span>
+log4j.appender.RollingFile=org.apache.log4j.RollingFileAppender
+log4j.appender.RollingFile.MaxFileSize=10MB
+log4j.appender.RollingFile.MaxBackupIndex=5
+
+<span class="cm"># アプリロガー (additivity=false)</span>
+log4j.logger.com.example=DEBUG, Console, RollingFile
+log4j.additivity.com.example=false</code></pre>
+
+<h3>変換後の log4j2.xml（抜粋）</h3>
+<pre><code class="language-xml"><span class="xml-tag">&lt;Configuration&gt;</span>
+  <span class="xml-tag">&lt;Appenders&gt;</span>
+    <span class="xml-tag">&lt;Console</span> <span class="xml-attr">name</span>=<span class="xml-val">"Console"</span> <span class="xml-attr">target</span>=<span class="xml-val">"SYSTEM_OUT"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-cm">&lt;!-- ⚠ %-5v1Level は誤変換 → %-5level に手動修正が必要 --&gt;</span>
+      <span class="xml-cm">&lt;!-- ⚠ %properties{orderId} も誤変換 → %X{orderId} に修正 --&gt;</span>
+      <span class="xml-tag">&lt;PatternLayout</span> <span class="xml-attr">pattern</span>=<span class="xml-val">"%d{HH:mm:ss.SSS} [%t] %-5v1Level %c{1} [%properties{orderId}] - %m%n"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Console&gt;</span>
+  <span class="xml-tag">&lt;/Appenders&gt;</span>
+<span class="xml-tag">&lt;/Configuration&gt;</span></code></pre>
+
+<h3>変換後に手動確認が必要な箇所</h3>
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <strong>自動変換後の必須チェックリスト</strong>
+    <p>① <code>%-5v1Level</code> → <code>%-5level</code> に修正（パターン文字の誤変換）<br>
+    ② <code>%properties{key}</code> → <code>%X{key}</code> に修正（MDC 出力の誤変換）<br>
+    ③ <code>additivity="false"</code> の欠落がないか確認<br>
+    ④ <code>DailyRollingFileAppender</code> は <code>TimeBasedTriggeringPolicy</code> に変換されるが <code>filePattern</code> を要確認</p>
+  </div>
+</div>
+
+<div class="callout danger">
+  <span class="callout-icon">🚨</span>
+  <div class="callout-body">
+    <strong>XML 形式 (<code>log4j.xml</code>) は変換できない</strong>
+    <p>このツールは <code>log4j.properties</code> 形式のみ対応しています。DOCTYPE ベースの XML は正しく読み込まれません。XML 形式の場合は Step 7 の <code>farnetto/log4jconverter</code> を使用してください。</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== STEP 7 ===== -->
+<section id="step7">
+<h2>
+  <div class="step-header">
+    <div class="step-num s7">7</div>
+    <div>farnetto/log4jconverter で XML 設定ファイルを変換</div>
+  </div>
+</h2>
+
+<p>Step 6 が対応できない <strong>XML 形式（<code>&lt;!DOCTYPE&gt;</code> ベース）の <code>log4j.xml</code></strong> を変換するコミュニティ製ツールです。JAXB で XML をパースし FreeMarker テンプレートで <code>log4j2.xml</code> を生成します。</p>
+
+<h3>Step 6 との比較</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>項目</th><th>Step 6 (Log4j1ConfigurationConverter)</th><th>Step 7 (farnetto/log4jconverter)</th></tr></thead>
+<tbody>
+<tr><td>入力形式</td><td><code>log4j.properties</code> のみ</td><td><code>log4j.xml</code>（DOCTYPE 形式）</td></tr>
+<tr><td>XML 対応</td><td><span class="pill pill-red">✗ 失敗</span>（XML を properties として誤読）</td><td><span class="pill pill-green">✓ 成功</span>（JAXB でパース）</td></tr>
+<tr><td>Maven Central</td><td>あり（<code>log4j-1.2-api</code> に内包）</td><td>なし（ソースビルドが必要）</td></tr>
+<tr><td>Java 要件</td><td>Java 9+</td><td>ビルド: Java 8、実行: Java 9+（JAXB 追加要）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>なぜ Java 9 以降で JAXB が必要なのか</h3>
+<pre><code class="language-xml"><span class="cm">&lt;!-- JAXB は Java 9 以降で JDK から除外された (JEP 320) --&gt;</span>
+<span class="cm">&lt;!-- Java 9+ では以下の依存を明示的に追加する必要がある --&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>javax.xml.bind<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>jaxb-api<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;version&gt;</span>2.3.1<span class="xml-tag">&lt;/version&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>com.sun.xml.bind<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>jaxb-impl<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;version&gt;</span>2.3.9<span class="xml-tag">&lt;/version&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>javax.activation<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>activation<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="xml-tag">&lt;version&gt;</span>1.1.1<span class="xml-tag">&lt;/version&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span></code></pre>
+
+<h3>変換元 log4j.xml（DOCTYPE 形式）</h3>
+<pre><code class="language-xml"><span class="xml-tag">&lt;?xml version=<span class="xml-val">"1.0"</span> encoding=<span class="xml-val">"UTF-8"</span>?&gt;</span>
+<span class="hi"><span class="xml-cm">&lt;!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"&gt;</span>
+<span class="xml-tag">&lt;log4j:configuration</span> <span class="xml-attr">xmlns:log4j</span>=<span class="xml-val">"http://jakarta.apache.org/log4j/"</span> <span class="xml-attr">debug</span>=<span class="xml-val">"false"</span><span class="xml-tag">&gt;</span></span>
+
+  <span class="xml-tag">&lt;appender</span> <span class="xml-attr">name</span>=<span class="xml-val">"RollingFile"</span> <span class="xml-attr">class</span>=<span class="xml-val">"org.apache.log4j.RollingFileAppender"</span><span class="xml-tag">&gt;</span>
+    <span class="xml-tag">&lt;param</span> <span class="xml-attr">name</span>=<span class="xml-val">"File"</span> <span class="xml-attr">value</span>=<span class="xml-val">"target/rolling.log"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;param</span> <span class="xml-attr">name</span>=<span class="xml-val">"MaxFileSize"</span> <span class="xml-attr">value</span>=<span class="xml-val">"10MB"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;param</span> <span class="xml-attr">name</span>=<span class="xml-val">"MaxBackupIndex"</span> <span class="xml-attr">value</span>=<span class="xml-val">"5"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;layout</span> <span class="xml-attr">class</span>=<span class="xml-val">"org.apache.log4j.PatternLayout"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;param</span> <span class="xml-attr">name</span>=<span class="xml-val">"ConversionPattern"</span> <span class="xml-attr">value</span>=<span class="xml-val">"%d [%t] %-5p %c{2} - %m%n"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/layout&gt;</span>
+  <span class="xml-tag">&lt;/appender&gt;</span>
+
+  <span class="xml-tag">&lt;logger</span> <span class="xml-attr">name</span>=<span class="xml-val">"com.example"</span> <span class="xml-attr">additivity</span>=<span class="xml-val">"false"</span><span class="xml-tag">&gt;</span>
+    <span class="xml-tag">&lt;level</span> <span class="xml-attr">value</span>=<span class="xml-val">"DEBUG"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;appender-ref</span> <span class="xml-attr">ref</span>=<span class="xml-val">"RollingFile"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/logger&gt;</span>
+  <span class="xml-tag">&lt;root&gt;</span>
+    <span class="xml-tag">&lt;level</span> <span class="xml-attr">value</span>=<span class="xml-val">"INFO"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/root&gt;</span>
+
+<span class="xml-tag">&lt;/log4j:configuration&gt;</span></code></pre>
+
+<h3>変換後の log4j2.xml（farnetto 出力）</h3>
+<pre><code class="language-xml"><span class="xml-tag">&lt;Configuration</span> <span class="xml-attr">status</span>=<span class="xml-val">"warn"</span><span class="xml-tag">&gt;</span>
+  <span class="xml-tag">&lt;Appenders&gt;</span>
+    <span class="hi-add"><span class="xml-tag">&lt;RollingFile</span> <span class="xml-attr">name</span>=<span class="xml-val">"RollingFile"</span> <span class="xml-attr">fileName</span>=<span class="xml-val">"target/rolling.log"</span> <span class="xml-attr">filePattern</span>=<span class="xml-val">"target/rolling-%i.log"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;PatternLayout</span> <span class="xml-attr">pattern</span>=<span class="xml-val">"%d [%t] %-5p %c{2} - %m%n"</span><span class="xml-tag">/&gt;</span>
+      <span class="xml-tag">&lt;Policies&gt;</span>
+        <span class="xml-tag">&lt;SizeBasedTriggeringPolicy</span> <span class="xml-attr">size</span>=<span class="xml-val">"10MB"</span><span class="xml-tag">/&gt;</span>
+      <span class="xml-tag">&lt;/Policies&gt;</span>
+      <span class="xml-tag">&lt;DefaultRolloverStrategy</span> <span class="xml-attr">max</span>=<span class="xml-val">"5"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/RollingFile&gt;</span></span>
+  <span class="xml-tag">&lt;/Appenders&gt;</span>
+  <span class="xml-tag">&lt;Loggers&gt;</span>
+    <span class="xml-tag">&lt;Logger</span> <span class="xml-attr">name</span>=<span class="xml-val">"com.example"</span> <span class="xml-attr">level</span>=<span class="xml-val">"DEBUG"</span> <span class="xml-attr">additivity</span>=<span class="xml-val">"false"</span><span class="xml-tag">&gt;</span>
+      <span class="xml-tag">&lt;AppenderRef</span> <span class="xml-attr">ref</span>=<span class="xml-val">"RollingFile"</span><span class="xml-tag">/&gt;</span>
+    <span class="xml-tag">&lt;/Logger&gt;</span>
+    <span class="xml-tag">&lt;Root</span> <span class="xml-attr">level</span>=<span class="xml-val">"INFO"</span><span class="xml-tag">/&gt;</span>
+  <span class="xml-tag">&lt;/Loggers&gt;</span>
+<span class="xml-tag">&lt;/Configuration&gt;</span></code></pre>
+
+<h3>実行コマンド</h3>
+<pre><code><span class="cm"># JAXB コピー + 変換を一括実行</span>
+mvn -pl step7-farnetto-converter generate-resources
+
+<span class="cm"># 出力確認</span>
+cat step7-farnetto-converter/target/log4j2-from-simple.xml
+cat step7-farnetto-converter/target/log4j2-from-complex.xml</code></pre>
+
+<h3>ツールを自分でビルドする場合</h3>
+<pre><code><span class="cm"># Java 8 が必要 (jaxb2-maven-plugin が Java 9+ で動作しないため)</span>
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_xxx.jdk/Contents/Home
+git clone --depth=1 https://github.com/farnetto/log4jconverter.git
+cd log4jconverter && mvn package -DskipTests
+
+<span class="cm"># ビルド後: JAR と依存ライブラリが生成される</span>
+ls target/log4jconverter-0.0.1-SNAPSHOT.jar
+ls target/lib/</code></pre>
+
+<div class="callout warn">
+  <span class="callout-icon">⚠️</span>
+  <div class="callout-body">
+    <strong>DailyRollingFileAppender は手動変換が必要</strong>
+    <p>FreeMarker テンプレートに専用ハンドラがなく、<code>&lt;DailyRollingFileAppender&gt;</code> タグのままフォールバック出力されます。<code>RollingFile</code> + <code>TimeBasedTriggeringPolicy</code> に手動で変換してください。</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== PITFALLS ===== -->
+<section id="pitfalls">
+<h2>よくある落とし穴と対処法</h2>
+
+<h3>1. log4j.properties が無視される</h3>
+<div class="callout danger">
+  <span class="callout-icon">🚨</span>
+  <div class="callout-body">
+    <strong>症状: ブリッジ移行後にログが出なくなった</strong>
+    <p>log4j 2.x バックエンドは <code>log4j.properties</code> を読みません。クラスパスに <code>log4j2.xml</code>（または <code>log4j2.json</code>）が必要です。<code>log4j-1.2-api</code> ブリッジ経由でも同様です。</p>
+  </div>
+</div>
+
+<h3>2. FATAL の扱い</h3>
+<div class="diff-grid">
+<div class="diff-box">
+  <div class="diff-label before">&#9888; log4j 1.x / 2.x</div>
+  <pre><code class="language-java">logger.<span class="fn">fatal</span>(<span class="st">"致命的エラー"</span>);
+<span class="cm">// SLF4J には FATAL がない → コンパイルエラー</span></code></pre>
+</div>
+<div class="diff-box">
+  <div class="diff-label after">✓ SLF4J 移行後</div>
+  <pre><code class="language-java">logger.<span class="fn">error</span>(<span class="st">"致命的エラー"</span>);
+<span class="cm">// FATAL → ERROR で代替</span></code></pre>
+</div>
+</div>
+
+<h3>3. MDC のクリア忘れ</h3>
+<pre><code class="language-java"><span class="cm">// ✓ スレッドプール環境では必ず finally でクリアする</span>
+<span class="ty">MDC</span>.<span class="fn">put</span>(<span class="st">"orderId"</span>, orderId);
+<span class="kw">try</span> {
+    <span class="cm">// 処理</span>
+} <span class="kw">finally</span> {
+    <span class="ty">MDC</span>.<span class="fn">remove</span>(<span class="st">"orderId"</span>);   <span class="cm">// ← これがないと次のリクエストに混入</span>
+}</code></pre>
+
+<h3>4. SLF4J ブリッジ名のバージョン混同</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>SLF4J バージョン</th><th>正しいブリッジ</th><th>間違い</th></tr></thead>
+<tbody>
+<tr>
+  <td>SLF4J 2.x</td>
+  <td><code>log4j-slf4j<strong>2</strong>-impl</code></td>
+  <td><code>log4j-slf4j-impl</code></td>
+</tr>
+<tr>
+  <td>SLF4J 1.x</td>
+  <td><code>log4j-slf4j-impl</code></td>
+  <td><code>log4j-slf4j2-impl</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="callout info">
+  <span class="callout-icon">ℹ️</span>
+  <div class="callout-body">
+    <strong>エラーメッセージ: <code>SLF4J: No SLF4J providers were found.</code></strong>
+    <p>ブリッジのアーティファクト名とバージョンが一致していないときに発生します。<code>mvn dependency:tree</code> で両方が同時にクラスパスに存在していないか確認してください。</p>
+  </div>
+</div>
+
+<h3>5. 依存の重複</h3>
+<pre><code class="language-xml"><span class="xml-cm">&lt;!-- ✗ log4j-1.2-api と log4j:log4j を同時に含めると競合 --&gt;</span>
+<span class="xml-cm">&lt;!-- ブリッジ移行後は log4j:log4j の除外を忘れずに --&gt;</span>
+<span class="xml-tag">&lt;dependency&gt;</span>
+  <span class="xml-tag">&lt;groupId&gt;</span>log4j<span class="xml-tag">&lt;/groupId&gt;</span>
+  <span class="xml-tag">&lt;artifactId&gt;</span>log4j<span class="xml-tag">&lt;/artifactId&gt;</span>
+  <span class="hi-rm"><span class="xml-tag">&lt;scope&gt;</span>compile<span class="xml-tag">&lt;/scope&gt;</span></span>  <span class="xml-cm">&lt;!-- ← 削除する --&gt;</span>
+<span class="xml-tag">&lt;/dependency&gt;</span></code></pre>
+
+<h3>6. OpenRewrite のバージョン整合</h3>
+<pre><code class="language-xml"><span class="xml-cm">&lt;!-- rewrite-maven-plugin の rewrite-core バージョンと --&gt;</span>
+<span class="xml-cm">&lt;!-- rewrite-logging-frameworks の rewrite-bom バージョンを一致させること --&gt;</span>
+<span class="xml-cm">&lt;!-- 不一致の場合: "Recipe validation error in ParameterizedLogging" --&gt;</span>
+<span class="xml-tag">&lt;version&gt;</span>5.42.0<span class="xml-tag">&lt;/version&gt;</span>        <span class="xml-cm">&lt;!-- rewrite-maven-plugin --&gt;</span>
+<span class="xml-tag">&lt;version&gt;</span>2.14.0<span class="xml-tag">&lt;/version&gt;</span>        <span class="xml-cm">&lt;!-- rewrite-logging-frameworks --&gt;</span></code></pre>
+</section>
+
+<!-- ===== CHEATSHEET ===== -->
+<section id="cheatsheet">
+<h2>API チートシート</h2>
+
+<h3>Logger 取得</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th></th><th>コード</th></tr></thead>
+<tbody>
+<tr>
+  <td><span class="pill pill-yellow">1.x</span></td>
+  <td><code>private static final Logger logger = Logger.getLogger(MyClass.class);</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-green">2.x</span></td>
+  <td><code>private static final Logger logger = LogManager.getLogger(MyClass.class);</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-purple">SLF4J</span></td>
+  <td><code>private static final Logger logger = LoggerFactory.getLogger(MyClass.class);</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>ログ出力</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th></th><th>パターン</th><th>コード例</th></tr></thead>
+<tbody>
+<tr>
+  <td><span class="pill pill-yellow">1.x</span></td>
+  <td>文字列結合</td>
+  <td><code>logger.debug("id=" + id + " amount=" + amt);</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-yellow">1.x</span></td>
+  <td>isEnabledガード</td>
+  <td><code>if (logger.isDebugEnabled()) { logger.debug("id=" + id); }</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-green">2.x</span></td>
+  <td>{} プレースホルダー</td>
+  <td><code>logger.debug("id={}, amount={}", id, amt);</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-green">2.x</span></td>
+  <td>ラムダ遅延評価</td>
+  <td><code>logger.info(() -> "詳細=" + expensive());</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-green">2.x</span></td>
+  <td>MapMessage</td>
+  <td><code>logger.info(new MapMessage&lt;&gt;().with("k", v));</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-purple">SLF4J</span></td>
+  <td>{} プレースホルダー</td>
+  <td><code>logger.debug("id={}, amount={}", id, amt);</code></td>
+</tr>
+<tr>
+  <td><span class="pill pill-purple">SLF4J</span></td>
+  <td>Fluent API</td>
+  <td><code>logger.atInfo().addKeyValue("id", id).log("メッセージ");</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>MDC / ThreadContext</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>操作</th><th>log4j 1.x</th><th>log4j 2.x</th><th>SLF4J</th></tr></thead>
+<tbody>
+<tr>
+  <td>設定</td>
+  <td><code>MDC.put(k, v)</code></td>
+  <td><code>ThreadContext.put(k, v)</code></td>
+  <td><code>MDC.put(k, v)</code></td>
+</tr>
+<tr>
+  <td>削除</td>
+  <td><code>MDC.remove(k)</code></td>
+  <td><code>ThreadContext.remove(k)</code></td>
+  <td><code>MDC.remove(k)</code></td>
+</tr>
+<tr>
+  <td>全削除</td>
+  <td><code>MDC.clear()</code></td>
+  <td><code>ThreadContext.clearAll()</code></td>
+  <td><code>MDC.clear()</code></td>
+</tr>
+<tr>
+  <td>パターン</td>
+  <td><code>%X{key}</code></td>
+  <td><code>%X{key}</code></td>
+  <td><code>%X{key}</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>設定ファイルの対応</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>要素</th><th>log4j 1.x (properties)</th><th>log4j 2.x (XML)</th></tr></thead>
+<tbody>
+<tr><td>ConsoleAppender</td><td><code>org.apache.log4j.ConsoleAppender</code></td><td><code>&lt;Console&gt;</code></td></tr>
+<tr><td>FileAppender</td><td><code>org.apache.log4j.FileAppender</code></td><td><code>&lt;File&gt;</code></td></tr>
+<tr><td>RollingFileAppender</td><td><code>org.apache.log4j.RollingFileAppender</code></td><td><code>&lt;RollingFile&gt;</code> + <code>&lt;SizeBasedTriggeringPolicy&gt;</code></td></tr>
+<tr><td>DailyRollingFileAppender</td><td><code>org.apache.log4j.DailyRollingFileAppender</code></td><td><code>&lt;RollingFile&gt;</code> + <code>&lt;TimeBasedTriggeringPolicy&gt;</code></td></tr>
+<tr><td>PatternLayout</td><td><code>layout.ConversionPattern</code></td><td><code>&lt;PatternLayout pattern="..."/&gt;</code></td></tr>
+<tr><td>ロガー定義</td><td><code>log4j.logger.pkg=LEVEL, Appender</code></td><td><code>&lt;Logger name="pkg" level="LEVEL"&gt;</code></td></tr>
+<tr><td>additivity</td><td><code>log4j.additivity.pkg=false</code></td><td><code>&lt;Logger additivity="false"&gt;</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>パターン文字の対応</h3>
+<div class="table-wrap">
+<table>
+<thead><tr><th>意味</th><th>1.x</th><th>2.x</th></tr></thead>
+<tbody>
+<tr><td>ログレベル</td><td><code>%p</code></td><td><code>%level</code>（<code>%p</code> も互換）</td></tr>
+<tr><td>ログレベル (幅指定)</td><td><code>%-5p</code></td><td><code>%-5level</code>（変換後に <code>%-5v1Level</code> → 要修正）</td></tr>
+<tr><td>MDC 値</td><td><code>%X{key}</code></td><td><code>%X{key}</code>（変換後に <code>%properties{key}</code> → 要修正）</td></tr>
+<tr><td>ロガー名</td><td><code>%c</code></td><td><code>%logger</code>（<code>%c</code> も互換）</td></tr>
+<tr><td>メッセージ</td><td><code>%m</code></td><td><code>%msg</code>（<code>%m</code> も互換）</td></tr>
+<tr><td>改行</td><td><code>%n</code></td><td><code>%n</code></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+
+<script>
+// Sidebar active link tracking
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('#sidebar a[href^="#"]');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector(`#sidebar a[href="#${e.target.id}"]`);
+      if (active) active.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
