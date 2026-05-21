@@ -18,7 +18,25 @@
       "Bash(mvn -pl step6-config-converter exec:java@convert-properties)",
       "Bash(mvn -pl step6-config-converter exec:java@convert-xml)",
       "Bash(python3 -c \"import sys; import xml.dom.minidom; print\\(xml.dom.minidom.parseString\\(sys.stdin.read\\(\\)\\).toprettyxml\\(indent=' '\\)\\)\")",
-      "Bash(mvn -pl step6-config-converter exec:java@convert-properties -q)"
+      "Bash(mvn -pl step6-config-converter exec:java@convert-properties -q)",
+      "Bash(mvn package *)",
+      "Bash(java -version)",
+      "Bash(/usr/libexec/java_home -V)",
+      "Bash(JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_191.jdk/Contents/Home mvn package -DskipTests -q)",
+      "Bash(JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_191.jdk/Contents/Home java -jar target/log4jconverter-0.0.1-SNAPSHOT.jar src/test/resources/in/log4j.simple.xml)",
+      "Bash(/Library/Java/JavaVirtualMachines/jdk1.8.0_191.jdk/Contents/Home/bin/java -jar target/log4jconverter-0.0.1-SNAPSHOT.jar src/test/resources/in/log4j.simple.xml)",
+      "Bash(/Library/Java/JavaVirtualMachines/jdk1.8.0_191.jdk/Contents/Home/bin/java *)",
+      "Bash(java -cp /tmp/log4jconverter/target/log4jconverter-0.0.1-SNAPSHOT.jar:/tmp/log4jconverter/target/lib/freemarker-2.3.28.jar:/tmp/jaxb-test/jaxb-api-2.3.1.jar:/tmp/jaxb-test/jaxb-impl-2.3.9.jar farnetto.log4jconverter.Converter /tmp/log4jconverter/src/test/resources/in/log4j.simple.xml)",
+      "Bash(mvn dependency:copy -Dartifact=javax.activation:activation:1.1.1 -DoutputDirectory=/tmp/jaxb-test/ -q)",
+      "Bash(java -cp /tmp/log4jconverter/target/log4jconverter-0.0.1-SNAPSHOT.jar:/tmp/log4jconverter/target/lib/freemarker-2.3.28.jar:/tmp/jaxb-test/jaxb-api-2.3.1.jar:/tmp/jaxb-test/jaxb-impl-2.3.9.jar:/tmp/jaxb-test/activation-1.1.1.jar farnetto.log4jconverter.Converter /tmp/log4jconverter/src/test/resources/in/log4j.simple.xml)",
+      "Bash(cp /tmp/log4jconverter/target/log4jconverter-0.0.1-SNAPSHOT.jar /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/log4jconverter.jar)",
+      "Bash(cp /tmp/log4jconverter/target/lib/freemarker-2.3.28.jar /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/)",
+      "Bash(java -cp /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/log4jconverter.jar:/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/freemarker-2.3.28.jar:__TRACKED_VAR__ farnetto.log4jconverter.Converter /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/../src/main/resources/input/log4j-simple.xml)",
+      "Bash(java -cp /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/log4jconverter.jar:/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/freemarker-2.3.28.jar:__TRACKED_VAR__ farnetto.log4jconverter.Converter /Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/../src/main/resources/input/log4j-complex.xml)",
+      "Bash(mvn -pl step7-farnetto-converter process-resources exec:exec@convert-simple exec:exec@convert-complex)",
+      "Bash(mvn -pl step7-farnetto-converter process-resources exec:exec@convert-simple)",
+      "Bash(mvn -pl step7-farnetto-converter generate-resources)",
+      "Bash(mvn -pl step7-farnetto-converter generate-resources -e)"
     ]
   }
 }

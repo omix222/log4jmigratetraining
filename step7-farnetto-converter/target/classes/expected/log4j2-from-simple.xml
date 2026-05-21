@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+############################################################################
+##
+##  This is the log configuration for production.
+##
+############################################################################
+-->
+<Configuration status="debug">
+
+    <Appenders>
+    
+        <!-- ====================================================================
+             application log
+             ==================================================================== -->
+        <RollingFile name="APPLICATION" fileName="logs/app.log" filePattern="logs/app-%i.log">
+            <PatternLayout pattern="%5p [%t] (%F:%L) - %m%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="75MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>    
+        </RollingFile>
+        
+           <!-- RollingFileAppender with default parameters -->
+        <RollingFile name="A2" fileName="logs/app.log" filePattern="logs/app-%i.log">
+            <PatternLayout pattern="%5p [%t] (%F:%L) - %m%n"/>
+        </RollingFile>
+        
+        
+        <File name="FOO" fileName="logs/foo.log" append="false">
+            <PatternLayout pattern="%m%n"/>
+            <ThresholdFilter level="INFO"/>
+        </File>
+        
+        <!-- ====================================================================
+             console log
+             ==================================================================== -->
+        <Console name="CONSOLE">
+            <PatternLayout pattern="%p %t %c - %m%n"/>
+        </Console>
+        
+           <!-- console log to stderr -->
+        <Console name="C2" target="SYSTEM_ERR">
+            <PatternLayout pattern="%p %t %c - %m%n"/>
+        </Console>
+        
+           <!-- does System.out get converted to STDOUT? -->
+        <Console name="C3">
+            <PatternLayout pattern="%p %t %c - %m%n"/>
+        </Console>
+        
+           <!-- custom appender -->
+        <CustomAppender name="CUSTOM">
+            <Param name="p1" value="v1"/>
+            <Param name="p2" value="v2"/>
+        </CustomAppender>
+        
+    </Appenders>
+    
+    <Loggers>
+           <!-- this is the logger for the converter package -->
+        <Logger name="farnetto.log4jconverter" level="DEBUG" additivity="false">
+            <AppenderRef ref="APPLICATION"/>
+        </Logger>
+        
+           <!-- this is another oneline comment -->
+        <Logger name="farnetto" level="WARN"/>
+        
+        <!-- ====================================================================
+             This is the root logger.
+             ==================================================================== -->
+        <Root level="INFO">
+            <AppenderRef ref="CONSOLE"/>
+            <AppenderRef ref="APPLICATION"/>
+        </Root>      
+    
+    </Loggers>
+    
+</Configuration>

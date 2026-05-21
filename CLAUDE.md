@@ -30,6 +30,11 @@ mvn -pl step5-openrewrite rewrite:run
 mvn -pl step6-config-converter exec:java@convert-properties
 cat step6-config-converter/target/log4j2-from-properties.xml
 
+# Step 7: farnetto/log4jconverter で XML 設定ファイルを変換
+mvn -pl step7-farnetto-converter generate-resources
+cat step7-farnetto-converter/target/log4j2-from-simple.xml
+cat step7-farnetto-converter/target/log4j2-from-complex.xml
+
 # 全モジュールをクリーン
 mvn clean
 ```
@@ -44,6 +49,7 @@ mvn clean
 | `step4-slf4j` | `slf4j-api` + `log4j-slf4j2-impl` | `log4j2.xml` | 実装非依存のベストプラクティス |
 | `step5-openrewrite` | `log4j:log4j` + `rewrite-maven-plugin` | `log4j.properties` | OpenRewrite による Java コードの自動変換 |
 | `step6-config-converter` | `log4j-1.2-api` | なし | Log4j1ConfigurationConverter による設定ファイル変換 |
+| `step7-farnetto-converter` | `jaxb-api` + `jaxb-impl` (実行時のみ) | なし | farnetto/log4jconverter による XML 設定ファイル変換 |
 
 ## アーキテクチャ上の重要な点
 
@@ -56,3 +62,5 @@ mvn clean
 - **step5 OpenRewrite と Java バージョン**: `rewrite-maven-plugin` 5.42.0 / `rewrite-logging-frameworks` 2.14.0 は内部で `com.sun.tools.javac.*` を使うが、このクラスが Java 25 で削除されているため、Java ソース解析に失敗する。**JDK 21 以下で実行すること**。pom.xml の依存更新は Java 25 でも動作する。バージョン対応: plugin の `rewrite-core` バージョン (`pom.xml` の `rewrite.version` プロパティ) と recipe の `rewrite-bom` バージョンを一致させる必要がある。
 
 - **step6 ConfigurationConverter の制約**: `Log4j1ConfigurationConverter` は `log4j.properties` 形式のみ正確に変換できる。`log4j.xml` (DOCTYPE ベース) は正しく読み込めない。変換後のパターン文字列に `%-5v1Level` (誤変換) や `%properties{key}` (本来は `%X{key}`) が含まれる場合があり、手動修正が必要。`additivity=false` が欠落する場合もある。
+
+- **step7 farnetto/log4jconverter の仕組みと制約**: JAXB + FreeMarker テンプレートで XML 形式の log4j 1.x 設定を変換する。ツールは Java 8 でビルド済みの JAR を `tools/` に同梱。Java 9+ では JAXB が JDK から除外されたため (`javax.xml.bind:jaxb-api`、`com.sun.xml.bind:jaxb-impl`、`javax.activation:activation`) を実行時依存として追加している。`DailyRollingFileAppender` は FreeMarker テンプレートに専用ハンドラがなく、タグ名をそのままシンプルな要素として出力するため手動変換が必要。コンバーターの `-i` フラグ (in-place 出力) はパス全体の `log4j` を `log4j2` に置換するため、プロジェクトディレクトリ名 `log4jmigrate` が壊れる。そのため maven-antrun-plugin の `<java output="...">` で stdout をファイルにリダイレクトする方式を採用。

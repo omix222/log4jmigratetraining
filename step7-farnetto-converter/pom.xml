@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>log4jmigrate</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>step7-farnetto-converter</artifactId>
+  <name>Step 7: farnetto/log4jconverter (XML 設定ファイル変換)</name>
+
+  <!--
+    farnetto/log4jconverter とは:
+      GitHub: https://github.com/farnetto/log4jconverter
+      log4j 1.x の XML 設定ファイル (DOCTYPE ベース) を log4j2.xml に変換する
+      コミュニティ製ツール。JAXB で XML をパース → FreeMarker テンプレートで
+      log4j2.xml を生成する。Maven Central には公開されておらず、
+      ソースからビルドして使う。
+
+    step6 との違い:
+      step6 の Log4j1ConfigurationConverter は properties 形式のみ対応で、
+      XML 形式 (<!DOCTYPE>) は正しく変換できない。
+      farnetto/log4jconverter は XML 形式専用ツールで、これを補完する。
+
+    ツール構成:
+      tools/log4jconverter.jar    ← コンバーター本体 (Java 8 でビルド済み)
+      tools/lib/                  ← 実行時依存 JARs (FreeMarker, log4j2)
+      ※ Java 9 以降で JAXB が JDK から除外されたため、実行時に
+        maven-dependency-plugin で取得した JAXB JARs も追加する。
+
+    実行方法:
+      # 両ファイルを一括変換 (generate-resources で JAXB コピー + 2変換を実行)
+      mvn -pl step7-farnetto-converter generate-resources
+
+    出力確認:
+      cat step7-farnetto-converter/target/log4j2-from-simple.xml
+      cat step7-farnetto-converter/target/log4j2-from-complex.xml
+
+    step6 との比較 (XML 変換の失敗 vs 成功):
+      # step6: XML → 変換失敗 (Log4j1ConfigurationConverter が XML を properties として誤読)
+      # step7: XML → log4j2.xml 変換成功 (farnetto/log4jconverter が JAXB で正確にパース)
+      diff step6-config-converter/src/main/resources/expected/log4j2-from-properties.xml \
+           step7-farnetto-converter/target/log4j2-from-complex.xml
+  -->
+
+  <dependencies>
+    <!--
+      JAXB は Java 8 まで JDK に含まれていたが、Java 9 以降は除外された (JEP 320)。
+      farnetto/log4jconverter は JAXB を使って log4j 1.x XML をパースするため、
+      Java 9 以降では明示的に依存関係として追加する必要がある。
+    -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
+      <version>2.3.9</version>
+    </dependency>
+    <!--
+      JAXB 実装が依存する javax.activation (Java 11 以降で JDK から除外)
+    -->
+    <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        JAXB の JAR を target/jaxb-lib/ にコピーする。
+        maven-antrun-plugin で java タスクのクラスパスに追加するために使う。
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.8.1</version>
+        <executions>
+          <execution>
+            <id>copy-jaxb-libs</id>
+            <phase>initialize</phase>
+            <goals><goal>copy-dependencies</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/jaxb-lib</outputDirectory>
+              <includeGroupIds>javax.xml.bind,com.sun.xml.bind,javax.activation</includeGroupIds>
+              <includeScope>compile</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!--
+        maven-antrun-plugin の Ant <java> タスクで変換を実行する。
+        exec-maven-plugin の exec:exec は stdout をファイルにリダイレクトできないが、
+        Ant の <java output="..."> 属性は stdout をファイルに書き出せる。
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <!--
+            log4j-simple.xml を変換する。
+            入力: src/main/resources/input/log4j-simple.xml
+                  (典型的な log4j 1.x XML: RollingFile, File, Console, カスタムAppender)
+            出力: target/log4j2-from-simple.xml
+            比較: src/main/resources/expected/log4j2-from-simple.xml
+          -->
+          <execution>
+            <id>convert-simple</id>
+            <phase>generate-resources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <java classname="farnetto.log4jconverter.Converter"
+                      fork="true"
+                      output="${project.build.directory}/log4j2-from-simple.xml">
+                  <classpath>
+                    <pathelement path="${project.basedir}/tools/log4jconverter.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/freemarker-2.3.28.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/log4j-api-2.11.0.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/log4j-core-2.11.0.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/jaxb-api-2.3.1.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/jaxb-impl-2.3.9.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/activation-1.1.1.jar"/>
+                  </classpath>
+                  <arg value="${project.basedir}/src/main/resources/input/log4j-simple.xml"/>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+
+          <!--
+            log4j-complex.xml を変換する。
+            入力: src/main/resources/input/log4j-complex.xml
+                  (step6 で Log4j1ConfigurationConverter が失敗した XML と同じ構成)
+            出力: target/log4j2-from-complex.xml
+            比較: src/main/resources/expected/log4j2-from-complex.xml
+
+            学習ポイント:
+              step6 の Log4j1ConfigurationConverter が XML を変換できなかった理由:
+                XML の DOCTYPE 宣言を properties ファイルの行として誤読するため。
+              farnetto/log4jconverter が成功する理由:
+                JAXB の Unmarshaller で log4j.dtd に従い XML を正確にパース → POJO に変換。
+                FreeMarker テンプレート (log4j2.ftl) で log4j2.xml を生成する。
+          -->
+          <execution>
+            <id>convert-complex</id>
+            <phase>generate-resources</phase>
+            <goals><goal>run</goal></goals>
+            <configuration>
+              <target>
+                <java classname="farnetto.log4jconverter.Converter"
+                      fork="true"
+                      output="${project.build.directory}/log4j2-from-complex.xml">
+                  <classpath>
+                    <pathelement path="${project.basedir}/tools/log4jconverter.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/freemarker-2.3.28.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/log4j-api-2.11.0.jar"/>
+                    <pathelement path="${project.basedir}/tools/lib/log4j-core-2.11.0.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/jaxb-api-2.3.1.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/jaxb-impl-2.3.9.jar"/>
+                    <pathelement path="${project.build.directory}/jaxb-lib/activation-1.1.1.jar"/>
+                  </classpath>
+                  <arg value="${project.basedir}/src/main/resources/input/log4j-complex.xml"/>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

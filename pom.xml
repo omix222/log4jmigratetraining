@@ -20,6 +20,7 @@
     <module>step4-slf4j</module>
     <module>step5-openrewrite</module>
     <module>step6-config-converter</module>
+    <module>step7-farnetto-converter</module>
   </modules>
 
   <properties>

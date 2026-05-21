@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="maven-antrun-" default="main">
+  <target name="main">
+    <java output="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/target/log4j2-from-complex.xml" fork="true" classname="farnetto.log4jconverter.Converter">
+      <classpath>
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/log4jconverter.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/freemarker-2.3.28.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/log4j-api-2.11.0.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/tools/lib/log4j-core-2.11.0.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/target/jaxb-lib/jaxb-api-2.3.1.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/target/jaxb-lib/jaxb-impl-2.3.9.jar" />
+        <pathelement path="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/target/jaxb-lib/activation-1.1.1.jar" />
+      </classpath>
+      <arg value="/Users/hiromitakahashi/java/log4jmigrate/step7-farnetto-converter/src/main/resources/input/log4j-complex.xml" />
+    </java>
+  </target>
+</project>

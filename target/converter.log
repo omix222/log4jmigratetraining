@@ -1,0 +1,7 @@
+2026-05-22 00:04:51,622 DEBUG f.l.Converter [main] {log4jconfiguration=<!--
+  log4j 1.x の設定ファイル (XML 形式) — 変換ツールの入力サンプル。
+  properties 形式と同じ設定を XML で記述したもの。
+
+  注意: log4j 1.x の XML は <!DOCTYPE> が必要。
+        log4j 2.x の XML (log4j2.xml) とは全く別物。
+-->, org.springframework=  <!-- 外部ライブラリの抑制 -->, RollingFile=  <!-- RollingFileAppender -->, DailyFile=  <!-- DailyRollingFileAppender -->, root=  <!-- ルートロガー -->, Console=  <!-- ConsoleAppender -->, com.example.database=  <!-- ロガー: com.example.database — WARN のみ -->, com.example=  <!-- ロガー: com.example — DEBUG レベル、additivity=false -->}
