@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>log4jmigrate</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>step6-config-converter</artifactId>
+  <name>Step 6: Log4j1ConfigurationConverter (設定ファイル変換)</name>
+
+  <!--
+    Log4j1ConfigurationConverter とは:
+      log4j-1.2-api に含まれるコマンドラインツール。
+      log4j 1.x の設定ファイル (log4j.properties / log4j.xml) を
+      log4j2.xml 形式に自動変換する。
+
+      OpenRewrite が "Java コード" を変換するのに対し、
+      このツールは "設定ファイル" を変換する。
+
+    使い方 (exec-maven-plugin 経由):
+      # log4j.properties → log4j2.xml 変換 (stdout に出力)
+      mvn -pl step6-config-converter exec:java@convert-properties
+
+      # log4j XML 形式 → log4j2.xml 変換
+      mvn -pl step6-config-converter exec:java@convert-xml
+
+    または Maven なしで直接実行:
+      JARS="$HOME/.m2/repository/org/apache/logging/log4j"
+      java -cp \
+        "$JARS/log4j-1.2-api/2.24.3/log4j-1.2-api-2.24.3.jar:\
+         $JARS/log4j-core/2.24.3/log4j-core-2.24.3.jar:\
+         $JARS/log4j-api/2.24.3/log4j-api-2.24.3.jar" \
+        org.apache.log4j.config.Log4j1ConfigurationConverter \
+        src/main/resources/log4j-complex.properties
+  -->
+
+  <dependencies>
+    <!--
+      Log4j1ConfigurationConverter は log4j-1.2-api に含まれる。
+      runtime スコープにしておくと exec:java のクラスパスに含まれる。
+    -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.4.1</version>
+        <executions>
+          <!-- log4j.properties を変換して target/log4j2-from-properties.xml に出力 -->
+          <execution>
+            <id>convert-properties</id>
+            <goals><goal>java</goal></goals>
+            <configuration>
+              <mainClass>org.apache.log4j.config.Log4j1ConfigurationConverter</mainClass>
+              <arguments>
+                <argument>--in=${project.basedir}/src/main/resources/log4j-complex.properties</argument>
+                <argument>--out=${project.build.directory}/log4j2-from-properties.xml</argument>
+              </arguments>
+            </configuration>
+          </execution>
+
+          <!--
+            log4j XML 形式の変換は現在のバージョン (log4j-1.2-api 2.24.3) では
+            正しく動作しない (DOCTYPE/namespace を持つ XML が properties として誤読される)。
+            properties 形式の設定ファイルを使っている場合のみ convert-properties を使うこと。
+            XML 形式の設定ファイルは手動で log4j2.xml に変換することを推奨する。
+          -->
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

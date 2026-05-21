@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn --version)",
+      "Bash(java --version)",
+      "Bash(mvn compile *)",
+      "Bash(mvn -pl step1-log4j1 exec:java -q)",
+      "Bash(mvn -pl step2-bridge exec:java -q)",
+      "Bash(mvn -pl step2-bridge,step3-log4j2-native,step4-slf4j exec:java -q)",
+      "Bash(mvn -pl step5-openrewrite rewrite:dryRun)",
+      "Bash(mvn -pl step5-openrewrite rewrite:run)",
+      "Bash(git *)",
+      "Bash(mvn -pl step5-openrewrite compile -q)",
+      "Bash(mvn -pl step5-openrewrite rewrite:dryRun --errors)",
+      "Bash(rm /Users/hiromitakahashi/java/log4jmigrate/step5-openrewrite/expected/OrderService.java)",
+      "Bash(rmdir /Users/hiromitakahashi/java/log4jmigrate/step5-openrewrite/expected)",
+      "Bash(mvn -pl step6-config-converter compile -q)",
+      "Bash(mvn -pl step6-config-converter exec:java@convert-properties)",
+      "Bash(mvn -pl step6-config-converter exec:java@convert-xml)",
+      "Bash(python3 -c \"import sys; import xml.dom.minidom; print\\(xml.dom.minidom.parseString\\(sys.stdin.read\\(\\)\\).toprettyxml\\(indent=' '\\)\\)\")",
+      "Bash(mvn -pl step6-config-converter exec:java@convert-properties -q)"
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>log4jmigrate</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>step4-slf4j</artifactId>
+  <name>Step 4: SLF4J + log4j 2.x (ベストプラクティス)</name>
+
+  <!--
+    なぜ SLF4J を使うか:
+      - アプリコードがロギング実装に依存しない (実装を後から差し替え可能)
+      - ライブラリ開発者が SLF4J を使えば、利用者が任意の実装を選べる
+      - Spring Boot / Quarkus 等の主要フレームワークが SLF4J をデフォルト採用
+  -->
+  <dependencies>
+    <!-- SLF4J API: コンパイル依存 (アプリがこの API のみを使う) -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!--
+      log4j-slf4j2-impl: SLF4J → log4j 2.x のブリッジ実装。
+      ランタイムのみに必要。これを差し替えれば Logback 等に切り替え可能。
+
+      注意: slf4j 2.x 用は log4j-slf4j2-impl、
+            slf4j 1.x 用は log4j-slf4j-impl (数字が違う)
+    -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- log4j 2.x コア実装 (ランタイム) -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- JsonTemplateLayout を使うために必要 -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-layout-template-json</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <mainClass>com.example.App</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

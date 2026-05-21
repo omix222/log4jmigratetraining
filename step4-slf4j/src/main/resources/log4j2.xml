@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Step 4: 最終形の log4j2.xml。
+  SLF4J を通しても log4j2.xml の設定がそのまま有効。
+
+  本番環境向けの設定例:
+    - コンソール: 人間が読みやすいパターン
+    - ファイル: JSON 構造化ログ + ローリング
+    - 非同期: 全ロガーを非同期化 (log4j2.contextSelector)
+-->
+<Configuration status="WARN" monitorInterval="60">
+
+  <Properties>
+    <Property name="LOG_DIR">target</Property>
+    <Property name="APP_NAME">step4-slf4j</Property>
+    <!-- %X で ThreadContext (MDC) の全エントリを出力 -->
+    <Property name="LOG_PATTERN">%d{HH:mm:ss.SSS} [%t] %-5level %logger{1} MDC=%X - %msg%n</Property>
+  </Properties>
+
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="${LOG_PATTERN}"/>
+    </Console>
+
+    <RollingFile name="JsonFile"
+                 fileName="${LOG_DIR}/${APP_NAME}.jsonl"
+                 filePattern="${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}-%i.jsonl.gz">
+      <JsonTemplateLayout/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="10 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="7"/>
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="com.example" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="JsonFile"/>
+    </Logger>
+    <Root level="WARN">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

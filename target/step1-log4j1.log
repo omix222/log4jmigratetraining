@@ -1,0 +1,29 @@
+2026-05-21 22:43:50,663 [com.example.App.main()] INFO  com.example.App - [orderId=, customerId=, paymentId=] === Step 1: log4j 1.x デモ ===
+2026-05-21 22:43:50,676 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-001, customerId=CUST-A, paymentId=] 注文処理を開始します
+2026-05-21 22:43:50,686 [com.example.App.main()] DEBUG com.example.OrderService - [orderId=ORD-001, customerId=CUST-A, paymentId=] 注文詳細: orderId=ORD-001, amount=5000
+2026-05-21 22:43:50,687 [com.example.App.main()] DEBUG com.example.OrderService - [orderId=ORD-001, customerId=CUST-A, paymentId=] バリデーション通過: orderId=ORD-001
+2026-05-21 22:43:50,688 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-001, customerId=CUST-A, paymentId=] 支払い処理を実行します: orderId=ORD-001
+2026-05-21 22:43:50,688 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-001, customerId=CUST-A, paymentId=] 注文が正常に完了しました
+2026-05-21 22:43:50,698 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] 注文処理を開始します
+2026-05-21 22:43:50,699 [com.example.App.main()] DEBUG com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] 注文詳細: orderId=ORD-002, amount=150000
+2026-05-21 22:43:50,700 [com.example.App.main()] DEBUG com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] バリデーション通過: orderId=ORD-002
+2026-05-21 22:43:50,700 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] 支払い処理を実行します: orderId=ORD-002
+2026-05-21 22:43:50,700 [com.example.App.main()] WARN  com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] 高額注文を検出しました。amount=150000
+2026-05-21 22:43:50,701 [com.example.App.main()] INFO  com.example.OrderService - [orderId=ORD-002, customerId=CUST-B, paymentId=] 注文が正常に完了しました
+2026-05-21 22:43:50,701 [com.example.App.main()] INFO  com.example.PaymentService - [orderId=, customerId=, paymentId=FAIL-999] 決済開始: paymentId=FAIL-999, amount=3000
+2026-05-21 22:43:50,704 [com.example.App.main()] ERROR com.example.PaymentService - [orderId=, customerId=, paymentId=FAIL-999] 外部決済 API 呼び出し失敗
+com.example.PaymentService$ExternalApiException: 外部 API タイムアウト: FAIL-999
+	at com.example.PaymentService.simulateExternalCall(PaymentService.java:42)
+	at com.example.PaymentService.charge(PaymentService.java:27)
+	at com.example.App.main(App.java:28)
+	at org.codehaus.mojo.exec.ExecJavaMojo.doMain(ExecJavaMojo.java:358)
+	at org.codehaus.mojo.exec.ExecJavaMojo.doExec(ExecJavaMojo.java:347)
+	at org.codehaus.mojo.exec.ExecJavaMojo.lambda$execute$0(ExecJavaMojo.java:269)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+2026-05-21 22:43:50,718 [com.example.App.main()] INFO  com.example.PaymentService - [orderId=, customerId=, paymentId=PAY-XL] 決済開始: paymentId=PAY-XL, amount=2000000
+2026-05-21 22:43:50,719 [com.example.App.main()] FATAL com.example.PaymentService - [orderId=, customerId=, paymentId=PAY-XL] 決済上限超過。不正な取引の可能性: amount=2000000
+2026-05-21 22:43:50,719 [com.example.App.main()] INFO  com.example.OrderService - [orderId=, customerId=CUST-C, paymentId=] 注文処理を開始します
+2026-05-21 22:43:50,720 [com.example.App.main()] DEBUG com.example.OrderService - [orderId=, customerId=CUST-C, paymentId=] 注文詳細: orderId=, amount=-1
+2026-05-21 22:43:50,720 [com.example.App.main()] WARN  com.example.OrderService - [orderId=, customerId=CUST-C, paymentId=] 注文バリデーションエラー: orderId が空です
+2026-05-21 22:43:50,720 [com.example.App.main()] WARN  com.example.App - [orderId=, customerId=, paymentId=] メイン: バリデーションエラーをキャッチ: orderId が空です
+2026-05-21 22:43:50,720 [com.example.App.main()] INFO  com.example.App - [orderId=, customerId=, paymentId=] === Step 1 デモ終了 ===

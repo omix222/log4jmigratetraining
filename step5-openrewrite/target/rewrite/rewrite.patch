@@ -1,0 +1,40 @@
+diff --git a/java/log4jmigrate/step5-openrewrite/pom.xml b/java/log4jmigrate/step5-openrewrite/pom.xml
+index 3364ed0..571708d 100644
+--- a/java/log4jmigrate/step5-openrewrite/pom.xml
++++ b/java/log4jmigrate/step5-openrewrite/pom.xml
+@@ -14,34 +14,6 @@ org.openrewrite.java.logging.log4j.Log4j1ToLog4j2
+   <artifactId>step5-openrewrite</artifactId>
+   <name>Step 5: OpenRewrite 自動マイグレーション</name>
+ 
+-  <!--
+-    OpenRewrite とは:
+-      AST ベースの自動リファクタリングツール。
+-      レシピ (Recipe) を適用することで Java ソースコードと pom.xml を一括変換できる。
+-
+-    使い方:
+-      1. ドライラン (変更なし / 差分確認):
+-           mvn -pl step5-openrewrite rewrite:dryRun
+-           cat step5-openrewrite/target/rewrite/rewrite.patch
+-
+-      2. 実際に適用:
+-           mvn -pl step5-openrewrite rewrite:run
+-           (git diff で変化を確認、未コミットなら手動 diff で確認)
+-
+-    利用可能なレシピ (activeRecipes で切り替え):
+-      - Log4j1ToLog4j2 : log4j 1.x API to log4j 2.x API
+-      - Log4j1ToSlf4j  : log4j 1.x API to SLF4J API
+-  -->
+-
+-  <dependencies>
+-    <!-- 現状: log4j 1.x を使っている (移行前の状態) — バージョンを明示指定 -->
+-    <dependency>
+-      <groupId>log4j</groupId>
+-      <artifactId>log4j</artifactId>
+-      <version>1.2.17</version>
+-    </dependency>
+-  </dependencies>
+-
+   <build>
+     <plugins>
+       <plugin>
+

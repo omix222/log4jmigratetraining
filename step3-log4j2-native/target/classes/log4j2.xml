@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Step 3: log4j 2.x 設定ファイル。
+  1.x の log4j.properties と比較した主な進化:
+    1. 非同期 Appender (AsyncAppender / AsyncLogger)
+    2. JSON/YAML 形式の設定ファイルも選択可能
+    3. Lookup による動的な値埋め込み (${env:HOME}, ${ctx:orderId} 等)
+    4. フィルタリングが強力 (ThresholdFilter, MarkerFilter, etc.)
+    5. monitorInterval による設定の無停止リロード
+-->
+<Configuration status="WARN" monitorInterval="30">
+
+  <Properties>
+    <!-- 設定内で変数として使い回せる -->
+    <Property name="LOG_DIR">target</Property>
+    <Property name="APP_NAME">step3-log4j2-native</Property>
+  </Properties>
+
+  <Appenders>
+    <!-- コンソール: 開発環境向け読みやすい形式 -->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{1} [%X{orderId}/%X{customerId}] - %msg%n"/>
+    </Console>
+
+    <!-- JSON 構造化ログファイル: 本番環境向け (Elasticsearch/Splunk に流しやすい) -->
+    <RollingFile name="JsonFile"
+                 fileName="${LOG_DIR}/${APP_NAME}.jsonl"
+                 filePattern="${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}-%i.jsonl.gz">
+      <JsonTemplateLayout/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="10 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="5"/>
+    </RollingFile>
+
+    <!--
+      非同期 Appender: ロギングを別スレッドに委譲してアプリのレイテンシを下げる。
+      LMAX Disruptor を使う AsyncLogger (全体非同期) の方が高性能だが、
+      AsyncAppender は既存設定に追加するだけで使える手軽な選択肢。
+    -->
+    <Async name="AsyncConsole">
+      <AppenderRef ref="Console"/>
+    </Async>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="com.example" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="JsonFile"/>
+    </Logger>
+
+    <!-- 非同期ロガーを使う場合 (pom.xml の -DcontextSelector=Async と組み合わせる) -->
+    <!-- <AsyncLogger name="com.example" level="DEBUG" additivity="false"> -->
+    <!--   <AppenderRef ref="Console"/> -->
+    <!--   <AppenderRef ref="JsonFile"/> -->
+    <!-- </AsyncLogger> -->
+
+    <Root level="WARN">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

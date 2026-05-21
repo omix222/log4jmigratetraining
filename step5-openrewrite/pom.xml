@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.example</groupId>
+    <artifactId>log4jmigrate</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>step5-openrewrite</artifactId>
+  <name>Step 5: OpenRewrite 自動マイグレーション</name>
+
+  <!--
+    OpenRewrite とは:
+      AST ベースの自動リファクタリングツール。
+      レシピ (Recipe) を適用することで Java ソースコードと pom.xml を一括変換できる。
+
+    使い方 (JDK 21 が必要):
+      1. ドライラン (変更なし / 差分確認):
+           mvn -pl step5-openrewrite rewrite:dryRun
+           cat step5-openrewrite/target/rewrite/rewrite.patch
+
+      2. 実際に適用:
+           mvn -pl step5-openrewrite rewrite:run
+
+      3. 変換結果を確認し、step3-log4j2-native と比較する
+
+    Java バージョン要件:
+      OpenRewrite 8.36.0 は com.sun.tools.javac.* の内部 API を使用しており、
+      Java 25 では該当クラスが削除されているため Java ソースの解析に失敗する。
+      JDK 21 で実行すること:
+        sdk use java 21.x.x-...       (SDKMAN)
+        export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+
+      pom.xml の変換 (依存関係の更新) は Java 25 でも正常に動作する。
+
+    利用可能なレシピ (activeRecipes で切り替え):
+      - Log4j1ToLog4j2 : log4j 1.x API to log4j 2.x native API
+      - Log4j1ToSlf4j  : log4j 1.x API to SLF4J API
+  -->
+
+  <dependencies>
+    <!-- 移行前の状態: log4j 1.x -->
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.openrewrite.maven</groupId>
+        <artifactId>rewrite-maven-plugin</artifactId>
+        <version>5.42.0</version>
+        <configuration>
+          <activeRecipes>
+            <recipe>org.openrewrite.java.logging.log4j.Log4j1ToLog4j2</recipe>
+            <!--
+              代替レシピ (SLF4J に移行する場合):
+              <recipe>org.openrewrite.java.logging.slf4j.Log4j1ToSlf4j</recipe>
+            -->
+          </activeRecipes>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.openrewrite.recipe</groupId>
+            <artifactId>rewrite-logging-frameworks</artifactId>
+            <version>2.14.0</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <mainClass>com.example.App</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

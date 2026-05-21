@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  log4j 2.x 設定ファイル。
+  ブリッジ移行後はこちらが有効になる (log4j.properties は無効)。
+
+  主な変更点:
+    - ファイル名: log4j.properties → log4j2.xml (または log4j2.json/log4j2.yaml)
+    - 自動リロード: monitorInterval 属性で設定変更を無停止で反映できる
+-->
+<Configuration status="WARN" monitorInterval="30">
+  <Appenders>
+    <!-- コンソール出力 -->
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{1} [orderId=%X{orderId}] - %msg%n"/>
+    </Console>
+
+    <!-- ローリングファイル出力 (1.x にはなかった機能) -->
+    <RollingFile name="RollingFile"
+                 fileName="target/step2-bridge.log"
+                 filePattern="target/step2-bridge-%d{yyyy-MM-dd}-%i.log.gz">
+      <!-- JSON 形式で出力 — 構造化ログの第一歩 -->
+      <JsonTemplateLayout/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="10 MB"/>
+        <TimeBasedTriggeringPolicy interval="1"/>
+      </Policies>
+      <DefaultRolloverStrategy max="7"/>
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="com.example" level="DEBUG" additivity="false">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="RollingFile"/>
+    </Logger>
+    <Root level="INFO">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<!--
+  log4j 1.x の設定ファイル (XML 形式) — 変換ツールの入力サンプル。
+  properties 形式と同じ設定を XML で記述したもの。
+
+  注意: log4j 1.x の XML は <!DOCTYPE> が必要。
+        log4j 2.x の XML (log4j2.xml) とは全く別物。
+-->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+  <!-- ConsoleAppender -->
+  <appender name="Console" class="org.apache.log4j.ConsoleAppender">
+    <param name="Target" value="System.out"/>
+    <param name="Threshold" value="DEBUG"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{HH:mm:ss.SSS} [%t] %-5p %c{1} [%X{orderId}] - %m%n"/>
+    </layout>
+  </appender>
+
+  <!-- RollingFileAppender -->
+  <appender name="RollingFile" class="org.apache.log4j.RollingFileAppender">
+    <param name="File" value="target/rolling.log"/>
+    <param name="MaxFileSize" value="10MB"/>
+    <param name="MaxBackupIndex" value="5"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %c{2} - %m%n"/>
+    </layout>
+  </appender>
+
+  <!-- DailyRollingFileAppender -->
+  <appender name="DailyFile" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="File" value="target/daily.log"/>
+    <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d %-5p [%t] %c{2} - %m%n"/>
+    </layout>
+  </appender>
+
+  <!-- ロガー: com.example — DEBUG レベル、additivity=false -->
+  <logger name="com.example" additivity="false">
+    <level value="DEBUG"/>
+    <appender-ref ref="Console"/>
+    <appender-ref ref="RollingFile"/>
+  </logger>
+
+  <!-- ロガー: com.example.database — WARN のみ -->
+  <logger name="com.example.database" additivity="false">
+    <level value="WARN"/>
+    <appender-ref ref="DailyFile"/>
+  </logger>
+
+  <!-- 外部ライブラリの抑制 -->
+  <logger name="org.springframework">
+    <level value="WARN"/>
+  </logger>
+
+  <!-- ルートロガー -->
+  <root>
+    <level value="INFO"/>
+    <appender-ref ref="Console"/>
+    <appender-ref ref="RollingFile"/>
+  </root>
+
+</log4j:configuration>
