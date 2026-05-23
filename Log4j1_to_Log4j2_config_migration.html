@@ -1,0 +1,2988 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log4j 1.x から Log4j 2.x への設定ファイル変換仕様</title>
+<style>
+:root {
+  --bg: #f7f8fb;
+  --paper: #ffffff;
+  --ink: #1f2937;
+  --muted: #5b6472;
+  --line: #d9dee8;
+  --accent: #1f5fbf;
+  --accent-soft: #eaf2ff;
+  --code-bg: #f3f4f6;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  line-height: 1.75;
+}
+.document {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+.cover {
+  background: linear-gradient(135deg, #143b7d, #1f5fbf);
+  color: white;
+  border-radius: 18px;
+  padding: 34px 40px;
+  box-shadow: 0 10px 28px rgba(31, 95, 191, .18);
+  margin-bottom: 28px;
+}
+.cover h1 { margin: 0 0 12px; font-size: 2.05rem; line-height: 1.35; }
+.cover p { margin: 6px 0; color: #eef5ff; }
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.meta div {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.toc, section.part {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 3px 14px rgba(17,24,39,.06);
+  padding: 24px 30px;
+  margin: 24px 0;
+}
+.toc h2 { margin-top: 0; }
+.toc ul { list-style: none; padding-left: 0; columns: 2; column-gap: 36px; }
+.toc li { break-inside: avoid; margin: 2px 0; }
+.toc li.lv2 { padding-left: 1rem; font-size: .96rem; }
+.toc li.lv3 { padding-left: 2rem; font-size: .91rem; color: var(--muted); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, h4 { line-height: 1.35; color: #172033; }
+h1 { font-size: 1.85rem; border-bottom: 4px solid var(--accent); padding-bottom: 8px; margin-top: 4px; }
+h2 { font-size: 1.45rem; border-left: 6px solid var(--accent); padding-left: 12px; margin-top: 34px; }
+h3 { font-size: 1.18rem; margin-top: 28px; }
+h4 { font-size: 1.04rem; margin-top: 22px; }
+.lead-title { font-size: 1.18rem; background: var(--accent-soft); border-left: 5px solid var(--accent); padding: 10px 14px; border-radius: 8px; }
+p { margin: .65em 0; }
+ul, ol { padding-left: 1.5rem; }
+.table-wrap { overflow-x: auto; margin: 14px 0 24px; border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; background: white; }
+th, td { border: 1px solid var(--line); padding: 9px 10px; vertical-align: top; }
+th { background: #eef3fb; color: #172033; font-weight: 700; }
+tr:nth-child(even) td { background: #fbfcff; }
+code { background: var(--code-bg); border-radius: 4px; padding: 0 .25em; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: .92em; }
+pre { background: #111827; color: #f8fafc; padding: 16px; border-radius: 12px; overflow-x: auto; line-height: 1.55; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+.note {
+  background: #fff8e6;
+  border: 1px solid #f2d492;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 18px 0;
+}
+.footer { color: var(--muted); text-align: center; font-size: .9rem; margin-top: 32px; }
+@media (max-width: 780px) {
+  .document { padding: 16px 12px 40px; }
+  .cover, .toc, section.part { padding: 18px; border-radius: 12px; }
+  .toc ul { columns: 1; }
+  table { min-width: 680px; }
+}
+@media print {
+  body { background: white; }
+  .document { max-width: none; padding: 0; }
+  .cover, .toc, section.part { box-shadow: none; border: none; }
+  .cover { color: #111; background: white; border-bottom: 2px solid #111; border-radius: 0; }
+  .cover p { color: #333; }
+  section.part { page-break-before: always; }
+  a { color: #111; text-decoration: none; }
+  .table-wrap { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<main class="document">
+  <header class="cover">
+    <h1>Log4j 1.x から Log4j 2.x への設定ファイル変換仕様</h1>
+    <p>XML形式とproperties形式の変換仕様を統合したHTML版ドキュメントです。</p>
+    <div class="meta">
+      <div><strong>対象</strong><br>log4j.xml / log4j.properties</div>
+      <div><strong>変換先</strong><br>log4j2.xml / log4j2.properties</div>
+      <div><strong>用途</strong><br>移行設計・実装・レビュー・テスト観点整理</div>
+    </div>
+  </header>
+  <nav class="toc" aria-label="目次">
+    <h2>目次</h2>
+    <ul><li class="lv1"><a href="#part-xml">第1部 XML形式: log4j.xml → log4j2.xml</a></li>
+<li class="lv2"><a href="#xml-1-変換方針">1. 変換方針</a></li>
+<li class="lv2"><a href="#xml-2-Appender-変換仕様">2. Appender 変換仕様</a></li>
+<li class="lv2"><a href="#xml-3-Layout--Pattern-変換仕様">3. Layout / Pattern 変換仕様</a></li>
+<li class="lv2"><a href="#xml-4-Filter-変換仕様">4. Filter 変換仕様</a></li>
+<li class="lv2"><a href="#xml-5-Logger--Root--Level-変換仕様">5. Logger / Root / Level
+変換仕様</a></li>
+<li class="lv2"><a href="#xml-6-変数展開・param・AppenderRef">6. 変数展開・param・AppenderRef</a></li>
+<li class="lv2"><a href="#xml-7-特殊-Appender-の補足仕様">7. 特殊 Appender の補足仕様</a></li>
+<li class="lv2"><a href="#xml-8-XML-変換例">8. XML 変換例</a></li>
+<li class="lv2"><a href="#xml-9-変換後レビュー観点">9. 変換後レビュー観点</a></li>
+<li class="lv2"><a href="#xml-10-参考情報">10. 参考情報</a></li>
+<li class="lv1"><a href="#part-properties">第2部 properties形式: log4j.properties → log4j2.properties</a></li>
+<li class="lv2"><a href="#prop-目次">目次</a></li>
+<li class="lv2"><a href="#prop-1-変換方針">1. 変換方針</a></li>
+<li class="lv2"><a href="#prop-2-Log4j-2-properties-の基本構造">2. Log4j 2 properties
+の基本構造</a></li>
+<li class="lv3"><a href="#prop-21-命名ルール">2.1 命名ルール</a></li>
+<li class="lv2"><a href="#prop-3-Root-Logger--Logger--Additivity-変換仕様">3. Root Logger / Logger
+/ Additivity 変換仕様</a></li>
+<li class="lv2"><a href="#prop-4-Appender-変換仕様">4. Appender 変換仕様</a></li>
+<li class="lv3"><a href="#prop-41-Appender-共通パラメータ">4.1 Appender 共通パラメータ</a></li>
+<li class="lv2"><a href="#prop-5-RollingFile--DailyRollingFile-変換仕様">5. RollingFile /
+DailyRollingFile 変換仕様</a></li>
+<li class="lv3"><a href="#prop-51-RollingFile-の標準テンプレート">5.1 RollingFile
+の標準テンプレート</a></li>
+<li class="lv2"><a href="#prop-6-Layout--PatternLayout-変換仕様">6. Layout / PatternLayout
+変換仕様</a></li>
+<li class="lv3"><a href="#prop-61-Pattern-converter-の確認表">6.1 Pattern converter の確認表</a></li>
+<li class="lv2"><a href="#prop-7-Filter--Threshold-変換仕様">7. Filter / Threshold 変換仕様</a></li>
+<li class="lv2"><a href="#prop-8-変数・Lookup・共通プロパティ変換仕様">8.
+変数・Lookup・共通プロパティ変換仕様</a></li>
+<li class="lv2"><a href="#prop-9-変換例">9. 変換例</a></li>
+<li class="lv3"><a href="#prop-91-Console--RollingFile--個別-Logger">9.1 Console + RollingFile +
+個別 Logger</a></li>
+<li class="lv3"><a href="#prop-92-日次-Rolling-の例">9.2 日次 Rolling の例</a></li>
+<li class="lv3"><a href="#prop-93-サイズ--日次-Rolling-の例">9.3 サイズ + 日次 Rolling の例</a></li>
+<li class="lv2"><a href="#prop-10-移行手順・検証観点">10. 移行手順・検証観点</a></li>
+<li class="lv3"><a href="#prop-101-変換後チェックリスト">10.1 変換後チェックリスト</a></li>
+<li class="lv2"><a href="#prop-11-properties-形式維持時の設計判断">11. properties
+形式維持時の設計判断</a></li>
+<li class="lv2"><a href="#prop-12-参考情報">12. 参考情報</a></li></ul>
+  </nav>
+  <section class="part" id="part-xml">
+    <h1>第1部 XML形式: log4j.xml → log4j2.xml</h1>
+    <p class="lead-title"><strong>Log4j 1.x XML から Log4j 2.x XML への変換仕様</strong></p>
+<p>設定ファイル移行の設計・実装・レビュー用</p>
+<ul>
+<li><p>対象: Log4j 1.x の log4j.xml を Log4j 2.x の log4j2.xml
+に変換する作業。</p></li>
+<li><p>前提: 旧 log4j.xml をそのまま使い続けるのではなく、原則として
+Log4j 2 形式へ構造変換する。</p></li>
+<li><p>重要:
+変換完了条件は「アプリが起動すること」ではなく、「既存のログ運用・監査・監視が壊れないこと」。</p></li>
+</ul>
+<h2 id="xml-1-変換方針">1. 変換方針</h2>
+<p><strong>表1 変換方針の全体仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>項目</strong></th>
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ファイル名</td>
+<td>log4j.xml</td>
+<td>log4j2.xml</td>
+<td>ファイル名を log4j2.xml に変更</td>
+<td>Log4j 2 が自動検出できる場所へ配置する</td>
+</tr>
+<tr class="even">
+<td>ルート要素</td>
+<td>&lt;log4j:configuration&gt;</td>
+<td>&lt;Configuration&gt;</td>
+<td>namespace 付きルートを Configuration に置換</td>
+<td>xmlns:log4j は通常削除</td>
+</tr>
+<tr class="odd">
+<td>内部ログ</td>
+<td>debug="true"</td>
+<td>status="DEBUG"</td>
+<td>debug 属性を status 属性に変換</td>
+<td>status は Log4j 自身の内部ログレベル</td>
+</tr>
+<tr class="even">
+<td>全体閾値</td>
+<td>threshold="WARN"</td>
+<td>&lt;ThresholdFilter level="WARN"/&gt;</td>
+<td>Configuration 直下の Filter へ変換</td>
+<td>Logger level とは意味が異なる</td>
+</tr>
+<tr class="odd">
+<td>Appender 定義</td>
+<td>ルート直下の &lt;appender&gt;</td>
+<td>&lt;Appenders&gt; 配下</td>
+<td>すべての Appender を Appenders に集約</td>
+<td>class 属性は使わず Plugin 要素へ</td>
+</tr>
+<tr class="even">
+<td>Logger 定義</td>
+<td>&lt;category&gt;, &lt;logger&gt;, &lt;root&gt;</td>
+<td>&lt;Loggers&gt; 配下</td>
+<td>Logger / Root を Loggers に集約</td>
+<td>additivity の移行漏れに注意</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表2 全体構造の変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;log4j:configuration&gt;</td>
+<td>&lt;Configuration status="WARN"&gt;</td>
+<td>ルート要素を変換し、必要に応じて status を設定</td>
+</tr>
+<tr class="even">
+<td>&lt;appender name="A1" class="..."&gt;</td>
+<td>&lt;Appenders&gt;&lt;Console name="A1"&gt;...</td>
+<td>class 名から Log4j 2 Plugin 要素を選択</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="X" value="Y"/&gt;</td>
+<td>属性または子要素</td>
+<td>Appender / Layout / Filter ごとの意味に応じて変換</td>
+</tr>
+<tr class="even">
+<td>&lt;layout class="..."&gt;</td>
+<td>&lt;PatternLayout .../&gt; 等</td>
+<td>Layout Plugin 要素へ変換</td>
+</tr>
+<tr class="odd">
+<td>&lt;filter class="..."&gt;</td>
+<td>&lt;ThresholdFilter .../&gt; 等</td>
+<td>Filter Plugin 要素へ変換</td>
+</tr>
+<tr class="even">
+<td>&lt;category name="com.foo"&gt;</td>
+<td>&lt;Logger name="com.foo"&gt;</td>
+<td>category / logger を Logger に統一</td>
+</tr>
+<tr class="odd">
+<td>&lt;priority value="INFO"/&gt;</td>
+<td>level="INFO"</td>
+<td>priority / level 要素を level 属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;appender-ref ref="A1"/&gt;</td>
+<td>&lt;AppenderRef ref="A1"/&gt;</td>
+<td>要素名を Log4j 2 形式へ変換</td>
+</tr>
+<tr class="odd">
+<td>&lt;root&gt;</td>
+<td>&lt;Root&gt;</td>
+<td>Root Logger に変換</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-2-Appender-変換仕様">2. Appender 変換仕様</h2>
+<p><strong>表3 appender 要素の共通変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>変換対象</strong></th>
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Appender 要素</td>
+<td>&lt;appender name="CONSOLE"
+class="org.apache.log4j.ConsoleAppender"&gt;</td>
+<td>&lt;Console name="CONSOLE"&gt;</td>
+<td>class から Log4j 2 Appender Plugin 名へ変換</td>
+<td>class 属性は使わない</td>
+</tr>
+<tr class="even">
+<td>name</td>
+<td>name="CONSOLE"</td>
+<td>name="CONSOLE"</td>
+<td>そのまま維持</td>
+<td>AppenderRef の ref と一致させる</td>
+</tr>
+<tr class="odd">
+<td>param</td>
+<td>&lt;param name="File" value="app.log"/&gt;</td>
+<td>fileName="app.log"</td>
+<td>Appender ごとの属性名へ変換</td>
+<td>単純な小文字化は禁止</td>
+</tr>
+<tr class="even">
+<td>layout</td>
+<td>&lt;layout class="..."&gt;</td>
+<td>&lt;PatternLayout .../&gt;</td>
+<td>Appender 子要素として配置</td>
+<td>Layout は出力形式を決める</td>
+</tr>
+<tr class="odd">
+<td>filter</td>
+<td>&lt;filter class="..."&gt;</td>
+<td>&lt;ThresholdFilter .../&gt; 等</td>
+<td>Appender 子要素として配置</td>
+<td>複数 Filter は &lt;Filters&gt; にまとめる</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表4 Appender 種別別の変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x class</strong></th>
+<th><strong>Log4j 2.x 要素</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>主な変換項目</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>org.apache.log4j.ConsoleAppender</td>
+<td>&lt;Console&gt;</td>
+<td>Console Appender に変換</td>
+<td>Target → target</td>
+<td>System.out → SYSTEM_OUT、System.err → SYSTEM_ERR</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.FileAppender</td>
+<td>&lt;File&gt;</td>
+<td>File Appender に変換</td>
+<td>File → fileName、Append → append、ImmediateFlush →
+immediateFlush</td>
+<td>文字コード、flush、buffer 設定を確認</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.RollingFileAppender</td>
+<td>&lt;RollingFile&gt;</td>
+<td>サイズベース Rolling に変換</td>
+<td>MaxFileSize → SizeBasedTriggeringPolicy、MaxBackupIndex →
+DefaultRolloverStrategy</td>
+<td>filePattern が必須</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.DailyRollingFileAppender</td>
+<td>&lt;RollingFile&gt;</td>
+<td>時刻ベース Rolling に変換</td>
+<td>DatePattern → filePattern、TimeBasedTriggeringPolicy を追加</td>
+<td>ロールタイミングと日付パターンを検証</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.AsyncAppender</td>
+<td>&lt;Async&gt;</td>
+<td>非同期 Appender に変換</td>
+<td>内部 appender-ref → AppenderRef</td>
+<td>高性能化する場合は Async Logger も検討</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.jdbc.JDBCAppender</td>
+<td>&lt;JDBC&gt;</td>
+<td>JDBC Appender に再設計</td>
+<td>SQL 直書き → Column Mapping</td>
+<td>単純変換ではなく設計対象</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.net.SocketAppender</td>
+<td>&lt;Socket&gt;</td>
+<td>Socket Appender に変換</td>
+<td>RemoteHost → host、Port → port</td>
+<td>protocol / layout / reconnect を確認</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.net.SMTPAppender</td>
+<td>&lt;SMTP&gt;</td>
+<td>SMTP Appender に変換</td>
+<td>SMTPHost、To、From、Subject 等</td>
+<td>認証・TLS を再確認</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.net.SyslogAppender</td>
+<td>&lt;Syslog&gt;</td>
+<td>Syslog Appender に変換</td>
+<td>SyslogHost → host、Facility → facility</td>
+<td>facility、format、charset を確認</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.varia.NullAppender</td>
+<td>&lt;Null&gt;</td>
+<td>Null Appender に変換</td>
+<td>name のみ</td>
+<td>テスト用・抑止用</td>
+</tr>
+<tr class="odd">
+<td>カスタム Appender</td>
+<td>Log4j 2 Plugin</td>
+<td>原則再実装</td>
+<td>@Plugin 化</td>
+<td>bridge 恒久利用は避ける</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表5 ConsoleAppender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;appender name="CONSOLE"
+class="org.apache.log4j.ConsoleAppender"&gt;</td>
+<td>&lt;Console name="CONSOLE"&gt;</td>
+<td>class を Console 要素へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Target" value="System.out"/&gt;</td>
+<td>target="SYSTEM_OUT"</td>
+<td>値を Log4j 2 形式へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="Target" value="System.err"/&gt;</td>
+<td>target="SYSTEM_ERR"</td>
+<td>値を Log4j 2 形式へ</td>
+</tr>
+<tr class="even">
+<td>&lt;layout class="org.apache.log4j.PatternLayout"&gt;</td>
+<td>&lt;PatternLayout&gt;</td>
+<td>Layout 変換</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="ConversionPattern" value="..."/&gt;</td>
+<td>pattern="..."</td>
+<td>PatternLayout 属性へ</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表6 FileAppender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>class="org.apache.log4j.FileAppender"</td>
+<td>&lt;File&gt;</td>
+<td>File Appender へ</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>&lt;param name="File" value="/var/log/app.log"/&gt;</td>
+<td>fileName="/var/log/app.log"</td>
+<td>File → fileName</td>
+<td>大文字小文字が変わる</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="Append" value="true"/&gt;</td>
+<td>append="true"</td>
+<td>属性化</td>
+<td>既定値差異を確認</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="ImmediateFlush" value="true"/&gt;</td>
+<td>immediateFlush="true"</td>
+<td>属性化</td>
+<td>性能と障害時ログ保証に影響</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="BufferedIO" value="true"/&gt;</td>
+<td>bufferedIo="true"</td>
+<td>属性化</td>
+<td>ImmediateFlush との組み合わせ注意</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="BufferSize" value="8192"/&gt;</td>
+<td>bufferSize="8192"</td>
+<td>属性化</td>
+<td>単位・既定値確認</td>
+</tr>
+<tr class="odd">
+<td>&lt;layout ...&gt;</td>
+<td>&lt;PatternLayout .../&gt;</td>
+<td>子要素として変換</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表7 RollingFileAppender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>class="org.apache.log4j.RollingFileAppender"</td>
+<td>&lt;RollingFile&gt;</td>
+<td>RollingFile に変換</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>&lt;param name="File" value="app.log"/&gt;</td>
+<td>fileName="app.log"</td>
+<td>現行ログファイル名</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="MaxFileSize" value="100MB"/&gt;</td>
+<td>&lt;SizeBasedTriggeringPolicy size="100MB"/&gt;</td>
+<td>サイズベースロール条件へ</td>
+<td>&lt;Policies&gt; 配下に置く</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="MaxBackupIndex" value="10"/&gt;</td>
+<td>&lt;DefaultRolloverStrategy max="10"/&gt;</td>
+<td>世代数へ</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>Log4j 1 の暗黙ファイル名</td>
+<td>filePattern="app.log.%i"</td>
+<td>明示設定が必要</td>
+<td>Log4j 2 では filePattern を設計する</td>
+</tr>
+<tr class="even">
+<td>Log4j 1 の .1 ロール方式</td>
+<td>&lt;DefaultRolloverStrategy fileIndex="min"/&gt;</td>
+<td>旧挙動に近づける</td>
+<td>index 方式の差異が出やすい</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表8 DailyRollingFileAppender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>class="org.apache.log4j.DailyRollingFileAppender"</td>
+<td>&lt;RollingFile&gt;</td>
+<td>RollingFile に変換</td>
+<td>DailyRollingFileAppender 専用要素は使わない</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="File" value="app.log"/&gt;</td>
+<td>fileName="app.log"</td>
+<td>現行ログファイル名</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="DatePattern" value="'.'yyyy-MM-dd"/&gt;</td>
+<td>filePattern="app.log.%d{yyyy-MM-dd}"</td>
+<td>日付パターンを filePattern に組み込む</td>
+<td>クォートや大文字小文字に注意</td>
+</tr>
+<tr class="even">
+<td>日次ロール</td>
+<td>&lt;TimeBasedTriggeringPolicy interval="1"/&gt;</td>
+<td>時刻ベースポリシーを追加</td>
+<td>時刻境界とタイムゾーンを検証</td>
+</tr>
+<tr class="odd">
+<td>世代管理なし</td>
+<td>必要なら &lt;DefaultRolloverStrategy&gt;</td>
+<td>運用要件に応じて設定</td>
+<td>旧設定と保持期間が変わらないようにする</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-3-Layout--Pattern-変換仕様">3. Layout / Pattern 変換仕様</h2>
+<p><strong>表9 Layout 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x Layout class</strong></th>
+<th><strong>Log4j 2.x Layout</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>org.apache.log4j.PatternLayout</td>
+<td>&lt;PatternLayout&gt;</td>
+<td>ConversionPattern → pattern</td>
+<td>多くはそのまま利用可能</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.EnhancedPatternLayout</td>
+<td>&lt;PatternLayout&gt;</td>
+<td>同じ pattern を使用</td>
+<td>一部 converter の差異確認</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.SimpleLayout</td>
+<td>&lt;PatternLayout pattern="%p - %m%n"/&gt;</td>
+<td>固定パターンに変換</td>
+<td>公式移行ルール</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.TTCCLayout</td>
+<td>&lt;PatternLayout pattern="%r [%t] %p %c %notEmpty{%x }-
+%m%n"/&gt;</td>
+<td>固定パターンに変換</td>
+<td>公式移行ルール</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.HTMLLayout</td>
+<td>&lt;HtmlLayout&gt;</td>
+<td>HtmlLayout に変換</td>
+<td>出力 HTML 差異を確認</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.xml.XMLLayout</td>
+<td>原則完全相当なし</td>
+<td>互換が必要なら Log4j1XmlLayout を検討</td>
+<td>厳密互換が必要な場合のみ bridge 検討</td>
+</tr>
+<tr class="odd">
+<td>カスタム Layout</td>
+<td>Log4j 2 Plugin</td>
+<td>再実装</td>
+<td>ログパーサ互換性を試験</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表10 PatternLayout 詳細変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;layout class="org.apache.log4j.PatternLayout"&gt;</td>
+<td>&lt;PatternLayout&gt;</td>
+<td>class を要素名へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="ConversionPattern" value="%d %-5p %c -
+%m%n"/&gt;</td>
+<td>pattern="%d %-5p %c - %m%n"</td>
+<td>param を pattern 属性へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="Header" value="..."/&gt;</td>
+<td>header="..."</td>
+<td>必要に応じて属性化</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Footer" value="..."/&gt;</td>
+<td>footer="..."</td>
+<td>必要に応じて属性化</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表11 Pattern converter の注意点</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x Pattern</strong></th>
+<th><strong>Log4j 2.x Pattern</strong></th>
+<th><strong>変換</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>%d</td>
+<td>%d</td>
+<td>原則そのまま</td>
+<td>日付フォーマット確認</td>
+</tr>
+<tr class="even">
+<td>%p</td>
+<td>%p</td>
+<td>原則そのまま</td>
+<td>カスタム Level の厳密互換が必要なら %v1Level</td>
+</tr>
+<tr class="odd">
+<td>%c</td>
+<td>%c</td>
+<td>そのまま</td>
+<td>Logger 名</td>
+</tr>
+<tr class="even">
+<td>%C / %M / %L / %F</td>
+<td>同左</td>
+<td>そのまま</td>
+<td>caller location。性能影響あり</td>
+</tr>
+<tr class="odd">
+<td>%m</td>
+<td>%m</td>
+<td>そのまま</td>
+<td>Message</td>
+</tr>
+<tr class="even">
+<td>%n</td>
+<td>%n</td>
+<td>そのまま</td>
+<td>改行</td>
+</tr>
+<tr class="odd">
+<td>%t</td>
+<td>%t</td>
+<td>そのまま</td>
+<td>Thread 名</td>
+</tr>
+<tr class="even">
+<td>%x</td>
+<td>%x または %ndc</td>
+<td>厳密互換なら %ndc</td>
+<td>NDC 表示差異</td>
+</tr>
+<tr class="odd">
+<td>%X</td>
+<td>%X または %properties</td>
+<td>厳密互換なら %properties</td>
+<td>MDC / ThreadContext 表示差異</td>
+</tr>
+<tr class="even">
+<td>%r</td>
+<td>%r</td>
+<td>そのまま</td>
+<td>相対時刻</td>
+</tr>
+<tr class="odd">
+<td>%l</td>
+<td>%l</td>
+<td>そのまま</td>
+<td>location 情報。高コスト</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-4-Filter-変換仕様">4. Filter 変換仕様</h2>
+<p><strong>表12 filter 要素の変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x Filter class</strong></th>
+<th><strong>Log4j 2.x Filter</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>org.apache.log4j.varia.LevelMatchFilter</td>
+<td>&lt;LevelMatchFilter&gt;</td>
+<td>LevelToMatch → level</td>
+<td>AcceptOnMatch を onMatch / onMismatch に変換</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.varia.LevelRangeFilter</td>
+<td>&lt;LevelRangeFilter&gt;</td>
+<td>LevelMin → minLevel、LevelMax → maxLevel</td>
+<td>範囲条件の包含確認</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.varia.StringMatchFilter</td>
+<td>&lt;RegexFilter&gt; 等</td>
+<td>StringToMatch を正規表現などに変換</td>
+<td>部分一致・大小文字の差異に注意</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.varia.DenyAllFilter</td>
+<td>onMismatch="DENY" 等</td>
+<td>Filter chain の最後を DENY にする</td>
+<td>評価順に注意</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.varia.ExpressionFilter</td>
+<td>&lt;ScriptFilter&gt; 等</td>
+<td>個別設計</td>
+<td>スクリプト依存を確認</td>
+</tr>
+<tr class="even">
+<td>カスタム Filter</td>
+<td>Log4j 2 Plugin</td>
+<td>再実装</td>
+<td>ACCEPT / DENY / NEUTRAL の3値に合わせる</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表13 Filter パラメータ変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;param name="LevelToMatch" value="ERROR"/&gt;</td>
+<td>level="ERROR"</td>
+<td>LevelMatchFilter の属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="LevelMin" value="INFO"/&gt;</td>
+<td>minLevel="INFO"</td>
+<td>LevelRangeFilter の属性へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="LevelMax" value="ERROR"/&gt;</td>
+<td>maxLevel="ERROR"</td>
+<td>LevelRangeFilter の属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="AcceptOnMatch" value="true"/&gt;</td>
+<td>onMatch="ACCEPT" onMismatch="NEUTRAL"</td>
+<td>true の代表変換</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="AcceptOnMatch" value="false"/&gt;</td>
+<td>onMatch="DENY" onMismatch="NEUTRAL"</td>
+<td>要件に応じて調整</td>
+</tr>
+<tr class="even">
+<td>複数 &lt;filter&gt;</td>
+<td>&lt;Filters&gt;...&lt;/Filters&gt;</td>
+<td>Filter 群にまとめる。順序維持</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-5-Logger--Root--Level-変換仕様">5. Logger / Root / Level
+変換仕様</h2>
+<p><strong>表14 Logger / Category 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;category name="com.example"&gt;</td>
+<td>&lt;Logger name="com.example"&gt;</td>
+<td>category を Logger に変換</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>&lt;logger name="com.example"&gt;</td>
+<td>&lt;Logger name="com.example"&gt;</td>
+<td>logger を Logger に変換</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>&lt;priority value="DEBUG"/&gt;</td>
+<td>level="DEBUG"</td>
+<td>priority を level 属性へ</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>&lt;level value="DEBUG"/&gt;</td>
+<td>level="DEBUG"</td>
+<td>level を level 属性へ</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>&lt;appender-ref ref="FILE"/&gt;</td>
+<td>&lt;AppenderRef ref="FILE"/&gt;</td>
+<td>AppenderRef に変換</td>
+<td>大文字小文字注意</td>
+</tr>
+<tr class="even">
+<td>additivity="false"</td>
+<td>additivity="false"</td>
+<td>そのまま属性移行</td>
+<td>移行漏れは二重出力の原因</td>
+</tr>
+<tr class="odd">
+<td>INHERITED / NULL</td>
+<td>level 属性省略</td>
+<td>親 Logger から継承</td>
+<td>明示 level を付けない</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表15 Root Logger 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;root&gt;</td>
+<td>&lt;Root&gt;</td>
+<td>要素名を変換</td>
+</tr>
+<tr class="even">
+<td>&lt;priority value="INFO"/&gt;</td>
+<td>&lt;Root level="INFO"&gt;</td>
+<td>priority を Root の level 属性へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;level value="INFO"/&gt;</td>
+<td>&lt;Root level="INFO"&gt;</td>
+<td>level を Root の level 属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;appender-ref ref="CONSOLE"/&gt;</td>
+<td>&lt;AppenderRef ref="CONSOLE"/&gt;</td>
+<td>AppenderRef に変換</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表16 Level 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x</strong></th>
+<th><strong>Log4j 2.x</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ALL</td>
+<td>ALL</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>TRACE</td>
+<td>TRACE</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>DEBUG</td>
+<td>DEBUG</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>INFO</td>
+<td>INFO</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>WARN</td>
+<td>WARN</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>ERROR</td>
+<td>ERROR</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>FATAL</td>
+<td>FATAL</td>
+<td>そのまま</td>
+<td>運用上 ERROR に統合する場合は別途判断</td>
+</tr>
+<tr class="even">
+<td>OFF</td>
+<td>OFF</td>
+<td>そのまま</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>INHERITED</td>
+<td>level 属性省略</td>
+<td>親から継承</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>NULL</td>
+<td>level 属性省略</td>
+<td>親から継承</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>カスタム Level</td>
+<td>CustomLevel</td>
+<td>個別定義</td>
+<td>表示互換も確認</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-6-変数展開・param・AppenderRef">6. 変数展開・param・AppenderRef</h2>
+<p><strong>表17 変数展開・プロパティ変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>${log.dir}</td>
+<td>${sys:log.dir}</td>
+<td>システムプロパティ参照なら sys: を付与</td>
+<td>JVM -Dlog.dir=... 前提</td>
+</tr>
+<tr class="even">
+<td>${user.home}</td>
+<td>${sys:user.home}</td>
+<td>JVM system property へ</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>環境変数前提の値</td>
+<td>${env:LOG_DIR}</td>
+<td>env: lookup に変換</td>
+<td>Log4j 1.x 標準とは意味が違うため要確認</td>
+</tr>
+<tr class="even">
+<td>XML 内共通値</td>
+<td>&lt;Properties&gt;&lt;Property
+name="x"&gt;...&lt;/Property&gt;&lt;/Properties&gt;</td>
+<td>共通プロパティ化</td>
+<td>Log4j 2 では Properties を使える</td>
+</tr>
+<tr class="odd">
+<td>MDC 参照</td>
+<td>%X{key}</td>
+<td>Pattern 内では概ね維持</td>
+<td>設定値内参照なら ${ctx:key} を検討</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表18 param 変換の共通ルール</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;param name="File" value="..."/&gt;</td>
+<td>fileName="..."</td>
+<td>Appender 固有属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Append" value="true"/&gt;</td>
+<td>append="true"</td>
+<td>boolean 属性へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="Threshold" value="WARN"/&gt;</td>
+<td>&lt;ThresholdFilter level="WARN"/&gt;</td>
+<td>Filter へ変換するのが基本</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Target" value="System.out"/&gt;</td>
+<td>target="SYSTEM_OUT"</td>
+<td>Console の属性へ</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="ConversionPattern" value="..."/&gt;</td>
+<td>pattern="..."</td>
+<td>PatternLayout の属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Encoding" value="UTF-8"/&gt;</td>
+<td>charset="UTF-8"</td>
+<td>Layout または Appender 側で指定</td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="ImmediateFlush" value="true"/&gt;</td>
+<td>immediateFlush="true"</td>
+<td>Appender 属性へ</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="BufferedIO" value="true"/&gt;</td>
+<td>bufferedIo="true"</td>
+<td>Appender 属性へ</td>
+</tr>
+<tr class="odd">
+<td>未知の param</td>
+<td>個別設計</td>
+<td>変換不可として一覧化</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表19 appender-ref 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>&lt;appender-ref ref="A1"/&gt;</td>
+<td>&lt;AppenderRef ref="A1"/&gt;</td>
+<td>要素名を変換</td>
+<td>ref 値は Appender name と一致</td>
+</tr>
+<tr class="even">
+<td>Logger 配下の appender-ref</td>
+<td>Logger 配下の AppenderRef</td>
+<td>そのまま移行</td>
+<td>additivity に注意</td>
+</tr>
+<tr class="odd">
+<td>Root 配下の appender-ref</td>
+<td>Root 配下の AppenderRef</td>
+<td>そのまま移行</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>AppenderRef ごとの閾値なし</td>
+<td>&lt;AppenderRef ref="A1" level="WARN"/&gt;</td>
+<td>必要に応じて追加</td>
+<td>旧 Filter の簡略化に使える</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-7-特殊-Appender-の補足仕様">7. 特殊 Appender の補足仕様</h2>
+<p><strong>表20 非同期 Appender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>class="org.apache.log4j.AsyncAppender"</td>
+<td>&lt;Async&gt;</td>
+<td>Async Appender へ変換</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>&lt;appender-ref ref="FILE"/&gt;</td>
+<td>&lt;AppenderRef ref="FILE"/&gt;</td>
+<td>Async 配下に移行</td>
+<td></td>
+</tr>
+<tr class="odd">
+<td>&lt;param name="BufferSize" value="512"/&gt;</td>
+<td>bufferSize="512"</td>
+<td>属性へ</td>
+<td>2.x 側の仕様確認</td>
+</tr>
+<tr class="even">
+<td>&lt;param name="Blocking" value="true"/&gt;</td>
+<td>blocking="true"</td>
+<td>属性へ</td>
+<td>溢れた時の挙動を確認</td>
+</tr>
+<tr class="odd">
+<td>AsyncAppender 利用</td>
+<td>Async Logger 検討</td>
+<td>設計判断</td>
+<td>大量ログでは Async Logger の方が有効な場合あり</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表21 JDBC Appender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML</strong></th>
+<th><strong>Log4j 2.x XML</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>class="org.apache.log4j.jdbc.JDBCAppender"</td>
+<td>&lt;JDBC&gt;</td>
+<td>JDBC Appender へ再設計</td>
+<td>単純変換しない</td>
+</tr>
+<tr class="even">
+<td>URL</td>
+<td>ConnectionSource</td>
+<td>接続定義へ</td>
+<td>DataSource 利用推奨</td>
+</tr>
+<tr class="odd">
+<td>Driver</td>
+<td>ConnectionSource</td>
+<td>接続定義へ</td>
+<td></td>
+</tr>
+<tr class="even">
+<td>User / Password</td>
+<td>ConnectionSource</td>
+<td>認証情報へ</td>
+<td>秘匿方法を見直す</td>
+</tr>
+<tr class="odd">
+<td>SQL</td>
+<td>&lt;Column&gt; 定義</td>
+<td>SQL 直書きから column mapping へ</td>
+<td>ログ形式・DB スキーマと合わせて設計</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表22 SMTP Appender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML param</strong></th>
+<th><strong>Log4j 2.x SMTP 属性</strong></th>
+<th><strong>変換仕様</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SMTPHost</td>
+<td>smtpHost</td>
+<td>属性へ</td>
+</tr>
+<tr class="even">
+<td>SMTPPort</td>
+<td>smtpPort</td>
+<td>属性へ</td>
+</tr>
+<tr class="odd">
+<td>SMTPUsername</td>
+<td>smtpUsername</td>
+<td>属性へ</td>
+</tr>
+<tr class="even">
+<td>SMTPPassword</td>
+<td>smtpPassword</td>
+<td>属性へ</td>
+</tr>
+<tr class="odd">
+<td>From</td>
+<td>from</td>
+<td>属性へ</td>
+</tr>
+<tr class="even">
+<td>To</td>
+<td>to</td>
+<td>属性へ</td>
+</tr>
+<tr class="odd">
+<td>Cc</td>
+<td>cc</td>
+<td>属性へ</td>
+</tr>
+<tr class="even">
+<td>Bcc</td>
+<td>bcc</td>
+<td>属性へ</td>
+</tr>
+<tr class="odd">
+<td>Subject</td>
+<td>subject</td>
+<td>属性へ</td>
+</tr>
+<tr class="even">
+<td>BufferSize</td>
+<td>bufferSize</td>
+<td>属性へ</td>
+</tr>
+<tr class="odd">
+<td>SMTPProtocol</td>
+<td>smtpProtocol</td>
+<td>TLS / SMTPS 要確認</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表23 Syslog Appender 変換仕様</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x XML param</strong></th>
+<th><strong>Log4j 2.x Syslog 属性</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SyslogHost</td>
+<td>host</td>
+<td>ホスト名へ</td>
+<td>host:port 形式を使っていた場合は分離</td>
+</tr>
+<tr class="even">
+<td>Facility</td>
+<td>facility</td>
+<td>facility へ</td>
+<td>値の互換確認</td>
+</tr>
+<tr class="odd">
+<td>FacilityPrinting</td>
+<td>Layout / format 側で調整</td>
+<td>個別設計</td>
+<td>出力形式差分あり</td>
+</tr>
+<tr class="even">
+<td>Header</td>
+<td>format / includeMDC 等</td>
+<td>個別設計</td>
+<td>監視基盤パースに影響</td>
+</tr>
+<tr class="odd">
+<td>Threshold</td>
+<td>&lt;ThresholdFilter&gt;</td>
+<td>Filter へ</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-8-XML-変換例">8. XML 変換例</h2>
+<p>Log4j 1.x XML 例</p>
+<p>&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;!DOCTYPE log4j:configuration SYSTEM "log4j.dtd"&gt;</p>
+<p>&lt;log4j:configuration
+xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false"&gt;</p>
+<p>&lt;appender name="CONSOLE"
+class="org.apache.log4j.ConsoleAppender"&gt;</p>
+<p>&lt;param name="Target" value="System.out"/&gt;</p>
+<p>&lt;layout class="org.apache.log4j.PatternLayout"&gt;</p>
+<p>&lt;param name="ConversionPattern" value="%d [%t] %-5p %c -
+%m%n"/&gt;</p>
+<p>&lt;/layout&gt;</p>
+<p>&lt;/appender&gt;</p>
+<p>&lt;appender name="FILE"
+class="org.apache.log4j.RollingFileAppender"&gt;</p>
+<p>&lt;param name="File" value="${log.dir}/app.log"/&gt;</p>
+<p>&lt;param name="Append" value="true"/&gt;</p>
+<p>&lt;param name="MaxFileSize" value="100MB"/&gt;</p>
+<p>&lt;param name="MaxBackupIndex" value="10"/&gt;</p>
+<p>&lt;layout class="org.apache.log4j.PatternLayout"&gt;</p>
+<p>&lt;param name="ConversionPattern" value="%d [%t] %-5p %c -
+%m%n"/&gt;</p>
+<p>&lt;/layout&gt;</p>
+<p>&lt;/appender&gt;</p>
+<p>&lt;category name="com.example.batch" additivity="false"&gt;</p>
+<p>&lt;priority value="DEBUG"/&gt;</p>
+<p>&lt;appender-ref ref="FILE"/&gt;</p>
+<p>&lt;/category&gt;</p>
+<p>&lt;root&gt;</p>
+<p>&lt;priority value="INFO"/&gt;</p>
+<p>&lt;appender-ref ref="CONSOLE"/&gt;</p>
+<p>&lt;appender-ref ref="FILE"/&gt;</p>
+<p>&lt;/root&gt;</p>
+<p>&lt;/log4j:configuration&gt;</p>
+<p>Log4j 2.x XML 例</p>
+<p>&lt;?xml version="1.0" encoding="UTF-8"?&gt;</p>
+<p>&lt;Configuration status="WARN"&gt;</p>
+<p>&lt;Appenders&gt;</p>
+<p>&lt;Console name="CONSOLE" target="SYSTEM_OUT"&gt;</p>
+<p>&lt;PatternLayout pattern="%d [%t] %-5p %c - %m%n"/&gt;</p>
+<p>&lt;/Console&gt;</p>
+<p>&lt;RollingFile name="FILE"</p>
+<p>fileName="${sys:log.dir}/app.log"</p>
+<p>filePattern="${sys:log.dir}/app.log.%i"</p>
+<p>append="true"&gt;</p>
+<p>&lt;PatternLayout pattern="%d [%t] %-5p %c - %m%n"/&gt;</p>
+<p>&lt;Policies&gt;</p>
+<p>&lt;SizeBasedTriggeringPolicy size="100MB"/&gt;</p>
+<p>&lt;/Policies&gt;</p>
+<p>&lt;DefaultRolloverStrategy max="10" fileIndex="min"/&gt;</p>
+<p>&lt;/RollingFile&gt;</p>
+<p>&lt;/Appenders&gt;</p>
+<p>&lt;Loggers&gt;</p>
+<p>&lt;Logger name="com.example.batch" level="DEBUG"
+additivity="false"&gt;</p>
+<p>&lt;AppenderRef ref="FILE"/&gt;</p>
+<p>&lt;/Logger&gt;</p>
+<p>&lt;Root level="INFO"&gt;</p>
+<p>&lt;AppenderRef ref="CONSOLE"/&gt;</p>
+<p>&lt;AppenderRef ref="FILE"/&gt;</p>
+<p>&lt;/Root&gt;</p>
+<p>&lt;/Loggers&gt;</p>
+<p>&lt;/Configuration&gt;</p>
+<h2 id="xml-9-変換後レビュー観点">9. 変換後レビュー観点</h2>
+<p><strong>表24 変換後に必ず確認すべき観点</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>確認観点</strong></th>
+<th><strong>確認内容</strong></th>
+<th><strong>典型的な不具合</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ファイル検出</td>
+<td>log4j2.xml として読み込まれているか</td>
+<td>デフォルト設定で Console だけ出る</td>
+</tr>
+<tr class="even">
+<td>Appender 名</td>
+<td>Appender name と AppenderRef ref が一致しているか</td>
+<td>ログが出ない</td>
+</tr>
+<tr class="odd">
+<td>Logger level</td>
+<td>priority / level が正しく移行されたか</td>
+<td>ログ量が変わる</td>
+</tr>
+<tr class="even">
+<td>additivity</td>
+<td>additivity="false" を移行したか</td>
+<td>二重出力</td>
+</tr>
+<tr class="odd">
+<td>Rolling 条件</td>
+<td>MaxFileSize / MaxBackupIndex / DatePattern が再現されているか</td>
+<td>ログ肥大化、世代削除漏れ</td>
+</tr>
+<tr class="even">
+<td>filePattern</td>
+<td>旧ファイル名規則と一致しているか</td>
+<td>運用スクリプト・監視・収集が壊れる</td>
+</tr>
+<tr class="odd">
+<td>変数展開</td>
+<td>${log.dir} を ${sys:log.dir} 等へ直したか</td>
+<td>ログファイル作成失敗</td>
+</tr>
+<tr class="even">
+<td>Layout</td>
+<td>Pattern が既存ログパーサと一致しているか</td>
+<td>Splunk / Fluentd / Logstash 側でパース失敗</td>
+</tr>
+<tr class="odd">
+<td>MDC / NDC</td>
+<td>%X / %x の表示差分</td>
+<td>監査ログ・トレース ID 欠落</td>
+</tr>
+<tr class="even">
+<td>例外ログ</td>
+<td>StackTrace の出方</td>
+<td>障害解析ルールに影響</td>
+</tr>
+<tr class="odd">
+<td>charset</td>
+<td>日本語ログの文字化け</td>
+<td>監視・検索で文字化け</td>
+</tr>
+<tr class="even">
+<td>Filter</td>
+<td>AcceptOnMatch の意味が維持されているか</td>
+<td>必要ログが出ない / 不要ログが出る</td>
+</tr>
+<tr class="odd">
+<td>カスタム部品</td>
+<td>独自 Appender / Layout / Filter の有無</td>
+<td>起動失敗</td>
+</tr>
+<tr class="even">
+<td>旧 jar 排除</td>
+<td>log4j:log4j が残っていないか</td>
+<td>競合・脆弱性残存</td>
+</tr>
+<tr class="odd">
+<td>bridge 利用有無</td>
+<td>log4j-1.2-api を一時利用に限定しているか</td>
+<td>恒久的な複雑化</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>表25 変換ルールの優先順位</strong></p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 50%"/>
+<col style="width: 50%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>優先度</strong></th>
+<th><strong>ルール</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>log4j.xml をそのまま使い続けず、原則 log4j2.xml に変換する</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>&lt;appender class="..."&gt; は Log4j 2 Plugin 要素へ変換する</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>&lt;param&gt; は機械的なタグ変換ではなく、Appender / Layout / Filter
+ごとの属性・子要素に変換する</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Rolling 系は必ず filePattern と &lt;Policies&gt; を明示する</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>category / logger は &lt;Logger&gt; に統一し、additivity
+を漏らさない</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>root は &lt;Root&gt; に変換し、AppenderRef を維持する</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>${foo} は JVM system property なら ${sys:foo} に変換する</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>PatternLayout は原則維持。ただし %p / %x / %X
+は厳密互換を確認する</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>カスタム Appender / Layout / Filter は再実装または bridge
+利用を判断する</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>最終判定は「起動する」ではなく「ログ運用・監査・監視が旧仕様と同等」で行う</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="xml-10-参考情報">10. 参考情報</h2>
+<ul>
+<li><p>Apache Log4j 2: Migrating from Log4j 1.x —
+https://logging.apache.org/log4j/2.x/migrate-from-log4j1.html</p></li>
+<li><p>Apache Log4j 2 Manual: Configuration —
+https://logging.apache.org/log4j/2.x/manual/configuration.html</p></li>
+<li><p>Apache Log4j 2 Manual: Appenders —
+https://logging.apache.org/log4j/2.x/manual/appenders.html</p></li>
+<li><p>Apache Log4j 2 Manual: Layouts —
+https://logging.apache.org/log4j/2.x/manual/layouts.html</p></li>
+<li><p>Apache Log4j 2 Manual: Filters —
+https://logging.apache.org/log4j/2.x/manual/filters.html</p></li>
+</ul>
+
+  </section>
+  <section class="part" id="part-properties">
+    <h1>第2部 properties形式: log4j.properties → log4j2.properties</h1>
+    <p class="lead-title"><strong>Log4j 1.x properties から Log4j 2.x properties
+への変換仕様</strong></p>
+<p>properties 形式を維持する場合の設計・変換・確認観点</p>
+<p><strong>Note:</strong> 本書は、既存の Log4j 1.x の log4j.properties
+を、Log4j 2.x の log4j2.properties へ変換するための仕様です。Log4j 2
+では XML/JSON/YAML/properties が利用できますが、本書では properties
+形式を維持することを前提にしています。</p>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 50%"/>
+<col style="width: 50%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>項目</strong></th>
+<th><strong>内容</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>対象</td>
+<td>Log4j 1.x の log4j.properties / Java properties 形式の設定</td>
+</tr>
+<tr class="even">
+<td>変換先</td>
+<td>Log4j 2.x の log4j2.properties</td>
+</tr>
+<tr class="odd">
+<td>前提</td>
+<td>アプリケーション側は Log4j 2 ランタイムで動作する。Log4j 1.x
+の設定ファイルは Log4j 2 では標準では読み込まれない。</td>
+</tr>
+<tr class="even">
+<td>非対象</td>
+<td>Log4j 1.x XML から Log4j 2 XML への変換、アプリケーションコードの
+API 置換、カスタム Appender の実装詳細</td>
+</tr>
+<tr class="odd">
+<td>推奨利用シーン</td>
+<td>Appender 数が比較的少ない、既存運用が properties 前提、環境差分を
+properties で管理している場合</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-目次">目次</h2>
+<ul>
+<li><p>1. 変換方針</p></li>
+<li><p>2. Log4j 2 properties の基本構造</p></li>
+<li><p>3. Root Logger / Logger / Additivity</p></li>
+<li><p>4. Appender 変換仕様</p></li>
+<li><p>5. RollingFile / DailyRollingFile 変換仕様</p></li>
+<li><p>6. Layout / PatternLayout</p></li>
+<li><p>7. Filter / Threshold</p></li>
+<li><p>8. 変数・Lookup・共通プロパティ</p></li>
+<li><p>9. 変換例</p></li>
+<li><p>10. 検証観点・移行手順</p></li>
+<li><p>11. 参考情報</p></li>
+</ul>
+<h2 id="prop-1-変換方針">1. 変換方針</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>観点</strong></th>
+<th><strong>Log4j 1.x properties</strong></th>
+<th><strong>Log4j 2.x properties</strong></th>
+<th><strong>変換方針</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>設定ファイル名</td>
+<td>log4j.properties</td>
+<td>log4j2.properties</td>
+<td>ファイル名を変更する</td>
+<td>Log4j 2 は Log4j 1.x
+形式を標準では読み込まない。互換機能は暫定利用に限定する。</td>
+</tr>
+<tr class="even">
+<td>設定モデル</td>
+<td>フラットな key=value</td>
+<td>Plugin 構造を key で表現</td>
+<td>Appender / Logger / Layout / Policy を構成要素として再定義する</td>
+<td>キー名は 1.x と互換ではない。単純置換は不可。</td>
+</tr>
+<tr class="odd">
+<td>Appender 定義</td>
+<td>log4j.appender.A1=class名</td>
+<td>appender.&lt;id&gt;.type=Plugin名</td>
+<td>class 名を type に変換する</td>
+<td>&lt;id&gt; は内部識別子。name は AppenderRef で参照する名前。</td>
+</tr>
+<tr class="even">
+<td>Layout 定義</td>
+<td>log4j.appender.A1.layout=class名</td>
+<td>appender.&lt;id&gt;.layout.type=PatternLayout</td>
+<td>Appender 配下の nested component として表現</td>
+<td>ConversionPattern は layout.pattern へ。</td>
+</tr>
+<tr class="odd">
+<td>Logger 定義</td>
+<td>log4j.logger.com.foo=DEBUG, FILE</td>
+<td>logger.&lt;id&gt;.name=com.foo / logger.&lt;id&gt;.level=DEBUG</td>
+<td>Logger ごとに id を割り当て、name と level を分離</td>
+<td>id は任意だが重複不可。</td>
+</tr>
+<tr class="even">
+<td>Root Logger</td>
+<td>log4j.rootLogger=INFO, CONSOLE</td>
+<td>rootLogger.level=INFO /
+rootLogger.appenderRef.&lt;id&gt;.ref=CONSOLE</td>
+<td>level と AppenderRef を分解</td>
+<td>rootCategory も rootLogger に統一。</td>
+</tr>
+<tr class="odd">
+<td>Rolling</td>
+<td>MaxFileSize / MaxBackupIndex</td>
+<td>policies / strategy</td>
+<td>明示的な policy と strategy に変換</td>
+<td>filePattern が必須。旧ファイル命名規則との互換確認が必要。</td>
+</tr>
+<tr class="even">
+<td>変数</td>
+<td>${log.dir}</td>
+<td>${sys:log.dir} など</td>
+<td>参照元を明示する</td>
+<td>JVM system property なら sys:、環境変数なら env:。</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Note:</strong> properties 形式を維持する場合でも、Log4j 2
+の内部構造は XML と同じです。XML の階層を properties
+のキーで表現していると考えると変換しやすくなります。</p>
+<h2 id="prop-2-Log4j-2-properties-の基本構造">2. Log4j 2 properties
+の基本構造</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>構成要素</strong></th>
+<th><strong>Log4j 2 properties の代表キー</strong></th>
+<th><strong>説明</strong></th>
+<th><strong>変換時のルール</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Configuration</td>
+<td>status = WARN<br/>
+name = AppConfig</td>
+<td>Log4j 自身の内部ログや設定名を定義</td>
+<td>status は本番では WARN または ERROR が一般的。移行検証時は DEBUG
+も可。</td>
+</tr>
+<tr class="even">
+<td>Property</td>
+<td>property.logDir = ${sys:log.dir}<br/>
+property.pattern = %d %-5p %c - %m%n</td>
+<td>設定内で再利用する値</td>
+<td>共通パターンやログディレクトリを外出しする。</td>
+</tr>
+<tr class="odd">
+<td>Appender</td>
+<td>appender.console.type = Console<br/>
+appender.console.name = CONSOLE</td>
+<td>出力先を定義</td>
+<td>appender.&lt;id&gt;.type と appender.&lt;id&gt;.name
+を必ず定義。</td>
+</tr>
+<tr class="even">
+<td>Layout</td>
+<td>appender.console.layout.type = PatternLayout<br/>
+appender.console.layout.pattern = ...</td>
+<td>出力形式を定義</td>
+<td>Appender 配下の nested component として定義。</td>
+</tr>
+<tr class="odd">
+<td>Policy</td>
+<td>appender.file.policies.type = Policies<br/>
+appender.file.policies.size.type = SizeBasedTriggeringPolicy</td>
+<td>Rolling 条件を定義</td>
+<td>RollingFile の場合は policies を明示。</td>
+</tr>
+<tr class="even">
+<td>Strategy</td>
+<td>appender.file.strategy.type = DefaultRolloverStrategy<br/>
+appender.file.strategy.max = 10</td>
+<td>世代管理を定義</td>
+<td>MaxBackupIndex は strategy.max へ。</td>
+</tr>
+<tr class="odd">
+<td>Logger</td>
+<td>logger.batch.name = com.example.batch<br/>
+logger.batch.level = DEBUG</td>
+<td>個別 Logger を定義</td>
+<td>logger.&lt;id&gt;.name が実際の Logger 名。</td>
+</tr>
+<tr class="even">
+<td>AppenderRef</td>
+<td>logger.batch.appenderRef.file.ref = FILE</td>
+<td>Logger と Appender を紐づける</td>
+<td>ref は appender.&lt;id&gt;.name と一致させる。</td>
+</tr>
+<tr class="odd">
+<td>RootLogger</td>
+<td>rootLogger.level = INFO<br/>
+rootLogger.appenderRef.console.ref = CONSOLE</td>
+<td>Root Logger を定義</td>
+<td>最後の受け皿。必要な AppenderRef を列挙。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prop-21-命名ルール">2.1 命名ルール</h3>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>項目</strong></th>
+<th><strong>仕様</strong></th>
+<th><strong>例</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>内部 id</td>
+<td>properties キーの一部として使う任意の識別子</td>
+<td>appender.console / logger.batch</td>
+<td>短く意味のある名前にする。実際の Logger 名ではない。</td>
+</tr>
+<tr class="even">
+<td>Appender name</td>
+<td>AppenderRef で参照される実名</td>
+<td>appender.console.name = CONSOLE</td>
+<td>1.x の appender 名と合わせると移行差分が小さい。</td>
+</tr>
+<tr class="odd">
+<td>Logger name</td>
+<td>Java パッケージ名またはクラス名</td>
+<td>logger.batch.name = com.example.batch</td>
+<td>1.x の log4j.logger.&lt;name&gt; の &lt;name&gt; 部分。</td>
+</tr>
+<tr class="even">
+<td>AppenderRef id</td>
+<td>AppenderRef の識別子</td>
+<td>rootLogger.appenderRef.console.ref = CONSOLE</td>
+<td>id は任意。ref が Appender name と一致することが重要。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-3-Root-Logger--Logger--Additivity-変換仕様">3. Root Logger / Logger
+/ Additivity 変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x properties</strong></th>
+<th><strong>Log4j 2.x properties</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>log4j.rootLogger=INFO, CONSOLE, FILE</td>
+<td>rootLogger.level = INFO<br/>
+rootLogger.appenderRef.console.ref = CONSOLE<br/>
+rootLogger.appenderRef.file.ref = FILE</td>
+<td>レベルと Appender を分解する</td>
+<td>AppenderRef の id は任意。ref は Appender name と一致。</td>
+</tr>
+<tr class="even">
+<td>log4j.rootCategory=WARN, FILE</td>
+<td>rootLogger.level = WARN<br/>
+rootLogger.appenderRef.file.ref = FILE</td>
+<td>rootCategory は rootLogger に統一</td>
+<td>旧設定で rootLogger と rootCategory
+が混在する場合は優先順位を確認。</td>
+</tr>
+<tr class="odd">
+<td>log4j.logger.com.foo=DEBUG</td>
+<td>logger.foo.name = com.foo<br/>
+logger.foo.level = DEBUG</td>
+<td>Logger 名とレベルを分離</td>
+<td>Appender 指定がない場合は additivity により親へ伝播。</td>
+</tr>
+<tr class="even">
+<td>log4j.logger.com.foo=DEBUG, FILE</td>
+<td>logger.foo.name = com.foo<br/>
+logger.foo.level = DEBUG<br/>
+logger.foo.appenderRef.file.ref = FILE</td>
+<td>AppenderRef を追加</td>
+<td>二重出力を避けるには additivity を確認。</td>
+</tr>
+<tr class="odd">
+<td>log4j.category.com.foo=INFO, CONSOLE</td>
+<td>logger.foo.name = com.foo<br/>
+logger.foo.level = INFO<br/>
+logger.foo.appenderRef.console.ref = CONSOLE</td>
+<td>category も logger に統一</td>
+<td>category は Log4j 1.x の旧表現。</td>
+</tr>
+<tr class="even">
+<td>log4j.additivity.com.foo=false</td>
+<td>logger.foo.additivity = false</td>
+<td>対象 Logger に additivity を設定</td>
+<td>移行漏れは二重出力の典型原因。</td>
+</tr>
+<tr class="odd">
+<td>log4j.logger.com.foo=INHERITED</td>
+<td>logger.foo.name = com.foo<br/>
+# level は定義しない</td>
+<td>親 Logger から継承</td>
+<td>NULL も同様に level を省略。</td>
+</tr>
+<tr class="even">
+<td>log4j.threshold=WARN</td>
+<td>filter.threshold.type = ThresholdFilter<br/>
+filter.threshold.level = WARN</td>
+<td>全体閾値は Filter へ変換</td>
+<td>単純な rootLogger.level とは意味が異なる。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-4-Appender-変換仕様">4. Appender 変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+<col style="width: 20%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x class</strong></th>
+<th><strong>Log4j 2 type</strong></th>
+<th><strong>主要変換項目</strong></th>
+<th><strong>Log4j 2 properties 例</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>org.apache.log4j.ConsoleAppender</td>
+<td>Console</td>
+<td>Target → target</td>
+<td>appender.console.type = Console<br/>
+appender.console.name = CONSOLE<br/>
+appender.console.target = SYSTEM_OUT</td>
+<td>System.out は SYSTEM_OUT、System.err は SYSTEM_ERR。</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.FileAppender</td>
+<td>File</td>
+<td>File → fileName<br/>
+Append → append<br/>
+ImmediateFlush → immediateFlush</td>
+<td>appender.file.type = File<br/>
+appender.file.name = FILE<br/>
+appender.file.fileName = ${sys:log.dir}/app.log<br/>
+appender.file.append = true</td>
+<td>bufferedIo / bufferSize / immediateFlush の既定値差異を確認。</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.RollingFileAppender</td>
+<td>RollingFile</td>
+<td>File / MaxFileSize / MaxBackupIndex</td>
+<td>appender.rolling.type = RollingFile<br/>
+appender.rolling.name = FILE<br/>
+appender.rolling.fileName = app.log<br/>
+appender.rolling.filePattern = app.log.%i</td>
+<td>filePattern と Policies が必要。</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.DailyRollingFileAppender</td>
+<td>RollingFile</td>
+<td>DatePattern → filePattern + TimeBasedTriggeringPolicy</td>
+<td>appender.daily.type = RollingFile<br/>
+appender.daily.filePattern = app.log.%d{yyyy-MM-dd}</td>
+<td>DailyRollingFileAppender 専用 type は使わない。</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.AsyncAppender</td>
+<td>Async</td>
+<td>appender-ref → AppenderRef</td>
+<td>appender.async.type = Async<br/>
+appender.async.name = ASYNC<br/>
+appender.async.appenderRef.file.ref = FILE</td>
+<td>性能設計上は Async Logger も検討。</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.net.SocketAppender</td>
+<td>Socket</td>
+<td>RemoteHost → host<br/>
+Port → port</td>
+<td>appender.socket.type = Socket<br/>
+appender.socket.host = loghost<br/>
+appender.socket.port = 4560</td>
+<td>protocol / reconnect / layout を確認。</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.net.SMTPAppender</td>
+<td>SMTP</td>
+<td>SMTPHost / To / From / Subject</td>
+<td>appender.mail.type = SMTP<br/>
+appender.mail.smtpHost = smtp.example.com<br/>
+appender.mail.to = ops@example.com</td>
+<td>認証・TLS・BufferSize を見直す。</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.net.SyslogAppender</td>
+<td>Syslog</td>
+<td>SyslogHost → host<br/>
+Facility → facility</td>
+<td>appender.syslog.type = Syslog<br/>
+appender.syslog.host = syslog.example.com<br/>
+appender.syslog.facility = LOCAL0</td>
+<td>出力形式と監視基盤のパース互換を確認。</td>
+</tr>
+<tr class="odd">
+<td>org.apache.log4j.jdbc.JDBCAppender</td>
+<td>JDBC</td>
+<td>SQL 直書き → Column Mapping</td>
+<td>appender.jdbc.type = JDBC<br/>
+appender.jdbc.name = JDBC</td>
+<td>単純変換ではなく再設計対象。</td>
+</tr>
+<tr class="even">
+<td>org.apache.log4j.varia.NullAppender</td>
+<td>Null</td>
+<td>name のみ</td>
+<td>appender.null.type = Null<br/>
+appender.null.name = NULL</td>
+<td>抑止用・テスト用。</td>
+</tr>
+<tr class="odd">
+<td>カスタム Appender</td>
+<td>独自 Plugin</td>
+<td>Log4j 2 Plugin 化</td>
+<td>appender.custom.type = CustomAppender</td>
+<td>bridge は暫定。恒久対応は再実装が基本。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prop-41-Appender-共通パラメータ">4.1 Appender 共通パラメータ</h3>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x property</strong></th>
+<th><strong>Log4j 2 property</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>log4j.appender.A1.Threshold=WARN</td>
+<td>appender.&lt;id&gt;.filter.threshold.type = ThresholdFilter<br/>
+appender.&lt;id&gt;.filter.threshold.level = WARN</td>
+<td>Appender 配下の Filter へ変換</td>
+<td>AppenderRef level で代替できる場合もある。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.ImmediateFlush=true</td>
+<td>appender.&lt;id&gt;.immediateFlush = true</td>
+<td>対応 Appender の属性へ</td>
+<td>障害時ログ欠落と性能のトレードオフ。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.A1.BufferedIO=true</td>
+<td>appender.&lt;id&gt;.bufferedIo = true</td>
+<td>属性へ</td>
+<td>大文字 IO ではなく bufferedIo。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.BufferSize=8192</td>
+<td>appender.&lt;id&gt;.bufferSize = 8192</td>
+<td>属性へ</td>
+<td>単位の扱いを確認。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.A1.Encoding=UTF-8</td>
+<td>appender.&lt;id&gt;.layout.charset = UTF-8</td>
+<td>Layout 側 charset へ寄せる</td>
+<td>Appender / Layout により指定位置が異なる。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-5-RollingFile--DailyRollingFile-変換仕様">5. RollingFile /
+DailyRollingFile 変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x property</strong></th>
+<th><strong>Log4j 2 properties</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>log4j.appender.FILE=org.apache.log4j.RollingFileAppender</td>
+<td>appender.file.type = RollingFile</td>
+<td>RollingFile type へ変換</td>
+<td>FileAppender ではなく RollingFile。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.FILE.File=${log.dir}/app.log</td>
+<td>appender.file.fileName = ${sys:log.dir}/app.log</td>
+<td>現行ログファイル名へ</td>
+<td>変数は sys/env などを明示。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.FILE.MaxFileSize=100MB</td>
+<td>appender.file.policies.type = Policies<br/>
+appender.file.policies.size.type = SizeBasedTriggeringPolicy<br/>
+appender.file.policies.size.size = 100MB</td>
+<td>サイズベースロールへ</td>
+<td>Policies コンポーネント配下に定義。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.FILE.MaxBackupIndex=10</td>
+<td>appender.file.strategy.type = DefaultRolloverStrategy<br/>
+appender.file.strategy.max = 10</td>
+<td>世代数へ</td>
+<td>削除対象や index 方式を検証。</td>
+</tr>
+<tr class="odd">
+<td>Log4j 1.x の暗黙ファイル名 app.log.1</td>
+<td>appender.file.filePattern = ${sys:log.dir}/app.log.%i</td>
+<td>filePattern を明示</td>
+<td>Log4j 2 では必須。</td>
+</tr>
+<tr class="even">
+<td>旧方式の .1 から順に使う運用</td>
+<td>appender.file.strategy.fileIndex = min</td>
+<td>旧挙動に近づける</td>
+<td>Log4j 2 の既定 index と差異が出る場合がある。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.DAILY=org.apache.log4j.DailyRollingFileAppender</td>
+<td>appender.daily.type = RollingFile</td>
+<td>Daily も RollingFile へ</td>
+<td>DailyRollingFileAppender type は使わない。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.DAILY.DatePattern='.'yyyy-MM-dd</td>
+<td>appender.daily.filePattern =
+${sys:log.dir}/app.log.%d{yyyy-MM-dd}<br/>
+appender.daily.policies.time.type = TimeBasedTriggeringPolicy<br/>
+appender.daily.policies.time.interval = 1</td>
+<td>日付パターンと時刻ベース policy へ</td>
+<td>日付境界、タイムゾーン、ファイル名を検証。</td>
+</tr>
+<tr class="odd">
+<td>サイズ + 日次の複合 rolling</td>
+<td>SizeBasedTriggeringPolicy + TimeBasedTriggeringPolicy</td>
+<td>複数 policy を Policies 配下に定義</td>
+<td>filePattern は %d と %i の両方を含める。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prop-51-RollingFile-の標準テンプレート">5.1 RollingFile
+の標準テンプレート</h3>
+<p>status = WARN<br/>
+name = AppConfig<br/>
+<br/>
+property.logDir = ${sys:log.dir}<br/>
+property.pattern = %d [%t] %-5p %c - %m%n<br/>
+<br/>
+appender.file.type = RollingFile<br/>
+appender.file.name = FILE<br/>
+appender.file.fileName = ${logDir}/app.log<br/>
+appender.file.filePattern = ${logDir}/app.log.%i<br/>
+appender.file.append = true<br/>
+appender.file.layout.type = PatternLayout<br/>
+appender.file.layout.pattern = ${pattern}<br/>
+appender.file.policies.type = Policies<br/>
+appender.file.policies.size.type = SizeBasedTriggeringPolicy<br/>
+appender.file.policies.size.size = 100MB<br/>
+appender.file.strategy.type = DefaultRolloverStrategy<br/>
+appender.file.strategy.max = 10<br/>
+appender.file.strategy.fileIndex = min<br/>
+<br/>
+rootLogger.level = INFO<br/>
+rootLogger.appenderRef.file.ref = FILE</p>
+<h2 id="prop-6-Layout--PatternLayout-変換仕様">6. Layout / PatternLayout
+変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x property</strong></th>
+<th><strong>Log4j 2 property</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>log4j.appender.A1.layout=org.apache.log4j.PatternLayout</td>
+<td>appender.&lt;id&gt;.layout.type = PatternLayout</td>
+<td>PatternLayout に変換</td>
+<td>多くの pattern はそのまま使える。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.layout.ConversionPattern=%d %-5p %c - %m%n</td>
+<td>appender.&lt;id&gt;.layout.pattern = %d %-5p %c - %m%n</td>
+<td>ConversionPattern を pattern へ</td>
+<td>ログ収集基盤のパース互換を確認。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.A1.layout=org.apache.log4j.SimpleLayout</td>
+<td>appender.&lt;id&gt;.layout.type = PatternLayout<br/>
+appender.&lt;id&gt;.layout.pattern = %p - %m%n</td>
+<td>SimpleLayout を固定 Pattern に変換</td>
+<td>公式移行ルールに沿う。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.layout=org.apache.log4j.TTCCLayout</td>
+<td>appender.&lt;id&gt;.layout.type = PatternLayout<br/>
+appender.&lt;id&gt;.layout.pattern = %r [%t] %p %c %notEmpty{%x }-
+%m%n</td>
+<td>TTCC 相当 Pattern に変換</td>
+<td>NDC 表示差異に注意。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.A1.layout=org.apache.log4j.HTMLLayout</td>
+<td>appender.&lt;id&gt;.layout.type = HtmlLayout</td>
+<td>HtmlLayout へ変換</td>
+<td>出力 HTML は完全一致しない可能性。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.layout=org.apache.log4j.xml.XMLLayout</td>
+<td>互換 Layout または別形式へ再設計</td>
+<td>完全互換が必要なら bridge の Log4j1XmlLayout を検討</td>
+<td>監査・解析で XML 形式を利用している場合は重点確認。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prop-61-Pattern-converter-の確認表">6.1 Pattern converter の確認表</h3>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x</strong></th>
+<th><strong>Log4j 2.x</strong></th>
+<th><strong>変換</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>%d</td>
+<td>%d</td>
+<td>原則そのまま</td>
+<td>日付フォーマット、タイムゾーン、ミリ秒表記を確認。</td>
+</tr>
+<tr class="even">
+<td>%p</td>
+<td>%p</td>
+<td>原則そのまま</td>
+<td>カスタム Level の表示互換が必要なら追加検証。</td>
+</tr>
+<tr class="odd">
+<td>%c</td>
+<td>%c</td>
+<td>そのまま</td>
+<td>Logger 名。</td>
+</tr>
+<tr class="even">
+<td>%m</td>
+<td>%m</td>
+<td>そのまま</td>
+<td>Message。</td>
+</tr>
+<tr class="odd">
+<td>%n</td>
+<td>%n</td>
+<td>そのまま</td>
+<td>改行。</td>
+</tr>
+<tr class="even">
+<td>%t</td>
+<td>%t</td>
+<td>そのまま</td>
+<td>Thread 名。</td>
+</tr>
+<tr class="odd">
+<td>%C / %M / %L / %F / %l</td>
+<td>同名 converter</td>
+<td>そのまま</td>
+<td>Caller location は高コスト。性能試験対象。</td>
+</tr>
+<tr class="even">
+<td>%x</td>
+<td>%x または %ndc</td>
+<td>厳密互換なら要検証</td>
+<td>NDC / ThreadContext Stack の表示差異。</td>
+</tr>
+<tr class="odd">
+<td>%X</td>
+<td>%X または %properties</td>
+<td>厳密互換なら要検証</td>
+<td>MDC / ThreadContext Map の表示差異。</td>
+</tr>
+<tr class="even">
+<td>例外出力</td>
+<td>%ex / %throwable</td>
+<td>要検証</td>
+<td>スタックトレース形式が監視ルールに影響。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-7-Filter--Threshold-変換仕様">7. Filter / Threshold 変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x property</strong></th>
+<th><strong>Log4j 2 properties</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>log4j.threshold=WARN</td>
+<td>filter.threshold.type = ThresholdFilter<br/>
+filter.threshold.level = WARN</td>
+<td>Configuration レベル Filter へ</td>
+<td>rootLogger.level とは異なるため意味を確認。</td>
+</tr>
+<tr class="even">
+<td>log4j.appender.A1.Threshold=ERROR</td>
+<td>appender.a1.filter.threshold.type = ThresholdFilter<br/>
+appender.a1.filter.threshold.level = ERROR</td>
+<td>Appender レベル Filter へ</td>
+<td>出力先ごとの閾値として使う。</td>
+</tr>
+<tr class="odd">
+<td>log4j.appender.A1.filter.F1=org.apache.log4j.varia.LevelMatchFilter</td>
+<td>appender.a1.filter.f1.type = LevelMatchFilter</td>
+<td>Filter type へ</td>
+<td>AcceptOnMatch の変換が重要。</td>
+</tr>
+<tr class="even">
+<td>LevelToMatch=ERROR</td>
+<td>appender.a1.filter.f1.level = ERROR</td>
+<td>level 属性へ</td>
+<td>完全一致。</td>
+</tr>
+<tr class="odd">
+<td>AcceptOnMatch=true</td>
+<td>appender.a1.filter.f1.onMatch = ACCEPT<br/>
+appender.a1.filter.f1.onMismatch = NEUTRAL</td>
+<td>true の代表変換</td>
+<td>後続 Filter の有無で onMismatch を調整。</td>
+</tr>
+<tr class="even">
+<td>AcceptOnMatch=false</td>
+<td>appender.a1.filter.f1.onMatch = DENY<br/>
+appender.a1.filter.f1.onMismatch = NEUTRAL</td>
+<td>false の代表変換</td>
+<td>1.x の Filter chain 意味を確認。</td>
+</tr>
+<tr class="odd">
+<td>LevelRangeFilter</td>
+<td>appender.a1.filter.range.type = LevelRangeFilter<br/>
+appender.a1.filter.range.minLevel = INFO<br/>
+appender.a1.filter.range.maxLevel = ERROR</td>
+<td>範囲 Filter へ</td>
+<td>包含条件を確認。</td>
+</tr>
+<tr class="even">
+<td>StringMatchFilter</td>
+<td>RegexFilter など</td>
+<td>文字列一致を正規表現等で表現</td>
+<td>部分一致・大小文字・Message 書式の差異に注意。</td>
+</tr>
+<tr class="odd">
+<td>DenyAllFilter</td>
+<td>onMismatch = DENY などで表現</td>
+<td>Filter chain の最後を DENY にする</td>
+<td>Log4j 2 は ACCEPT / DENY / NEUTRAL の3値評価。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-8-変数・Lookup・共通プロパティ変換仕様">8.
+変数・Lookup・共通プロパティ変換仕様</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>Log4j 1.x</strong></th>
+<th><strong>Log4j 2.x</strong></th>
+<th><strong>変換仕様</strong></th>
+<th><strong>注意点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>${log.dir}</td>
+<td>${sys:log.dir}</td>
+<td>JVM system property として明示</td>
+<td>-Dlog.dir=/var/log/app のように渡す前提。</td>
+</tr>
+<tr class="even">
+<td>${user.home}</td>
+<td>${sys:user.home}</td>
+<td>JVM system property へ</td>
+<td>Java 標準の system property。</td>
+</tr>
+<tr class="odd">
+<td>環境変数 LOG_DIR を使いたい</td>
+<td>${env:LOG_DIR}</td>
+<td>env lookup へ</td>
+<td>1.x の標準置換とは意味が違うため、移行時に明示判断。</td>
+</tr>
+<tr class="even">
+<td>共通パターンを各 Appender に直書き</td>
+<td>property.pattern = %d ...<br/>
+appender.file.layout.pattern = ${pattern}</td>
+<td>Log4j 2 の property に外出し</td>
+<td>重複削減とレビュー性向上。</td>
+</tr>
+<tr class="odd">
+<td>MDC の pattern 表示 %X{traceId}</td>
+<td>%X{traceId}</td>
+<td>Pattern 内は概ね維持</td>
+<td>アプリ側は ThreadContext に移行されることが多い。</td>
+</tr>
+<tr class="even">
+<td>設定値で MDC を参照</td>
+<td>${ctx:traceId}</td>
+<td>ctx lookup を利用</td>
+<td>評価タイミングに注意。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-9-変換例">9. 変換例</h2>
+<h3 id="prop-91-Console--RollingFile--個別-Logger">9.1 Console + RollingFile +
+個別 Logger</h3>
+<h4 id="prop-Log4j-1x-properties">Log4j 1.x properties</h4>
+<p>log4j.rootLogger=INFO, CONSOLE, FILE<br/>
+<br/>
+log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender<br/>
+log4j.appender.CONSOLE.Target=System.out<br/>
+log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout<br/>
+log4j.appender.CONSOLE.layout.ConversionPattern=%d [%t] %-5p %c -
+%m%n<br/>
+<br/>
+log4j.appender.FILE=org.apache.log4j.RollingFileAppender<br/>
+log4j.appender.FILE.File=${log.dir}/app.log<br/>
+log4j.appender.FILE.Append=true<br/>
+log4j.appender.FILE.MaxFileSize=100MB<br/>
+log4j.appender.FILE.MaxBackupIndex=10<br/>
+log4j.appender.FILE.layout=org.apache.log4j.PatternLayout<br/>
+log4j.appender.FILE.layout.ConversionPattern=%d [%t] %-5p %c -
+%m%n<br/>
+<br/>
+log4j.logger.com.example.batch=DEBUG, FILE<br/>
+log4j.additivity.com.example.batch=false</p>
+<h4 id="prop-Log4j-2x-properties">Log4j 2.x properties</h4>
+<p>status = WARN<br/>
+name = AppConfig<br/>
+<br/>
+property.logDir = ${sys:log.dir}<br/>
+property.pattern = %d [%t] %-5p %c - %m%n<br/>
+<br/>
+appender.console.type = Console<br/>
+appender.console.name = CONSOLE<br/>
+appender.console.target = SYSTEM_OUT<br/>
+appender.console.layout.type = PatternLayout<br/>
+appender.console.layout.pattern = ${pattern}<br/>
+<br/>
+appender.file.type = RollingFile<br/>
+appender.file.name = FILE<br/>
+appender.file.fileName = ${logDir}/app.log<br/>
+appender.file.filePattern = ${logDir}/app.log.%i<br/>
+appender.file.append = true<br/>
+appender.file.layout.type = PatternLayout<br/>
+appender.file.layout.pattern = ${pattern}<br/>
+appender.file.policies.type = Policies<br/>
+appender.file.policies.size.type = SizeBasedTriggeringPolicy<br/>
+appender.file.policies.size.size = 100MB<br/>
+appender.file.strategy.type = DefaultRolloverStrategy<br/>
+appender.file.strategy.max = 10<br/>
+appender.file.strategy.fileIndex = min<br/>
+<br/>
+logger.batch.name = com.example.batch<br/>
+logger.batch.level = DEBUG<br/>
+logger.batch.additivity = false<br/>
+logger.batch.appenderRef.file.ref = FILE<br/>
+<br/>
+rootLogger.level = INFO<br/>
+rootLogger.appenderRef.console.ref = CONSOLE<br/>
+rootLogger.appenderRef.file.ref = FILE</p>
+<h3 id="prop-92-日次-Rolling-の例">9.2 日次 Rolling の例</h3>
+<p>status = WARN<br/>
+name = DailyRollingConfig<br/>
+<br/>
+property.logDir = ${sys:log.dir}<br/>
+property.pattern = %d [%t] %-5p %c - %m%n<br/>
+<br/>
+appender.daily.type = RollingFile<br/>
+appender.daily.name = DAILY<br/>
+appender.daily.fileName = ${logDir}/app.log<br/>
+appender.daily.filePattern = ${logDir}/app.log.%d{yyyy-MM-dd}<br/>
+appender.daily.layout.type = PatternLayout<br/>
+appender.daily.layout.pattern = ${pattern}<br/>
+appender.daily.policies.type = Policies<br/>
+appender.daily.policies.time.type = TimeBasedTriggeringPolicy<br/>
+appender.daily.policies.time.interval = 1<br/>
+<br/>
+rootLogger.level = INFO<br/>
+rootLogger.appenderRef.daily.ref = DAILY</p>
+<h3 id="prop-93-サイズ--日次-Rolling-の例">9.3 サイズ + 日次 Rolling の例</h3>
+<p>status = WARN<br/>
+name = CompositeRollingConfig<br/>
+<br/>
+property.logDir = ${sys:log.dir}<br/>
+property.pattern = %d [%t] %-5p %c - %m%n<br/>
+<br/>
+appender.rolling.type = RollingFile<br/>
+appender.rolling.name = ROLLING<br/>
+appender.rolling.fileName = ${logDir}/app.log<br/>
+appender.rolling.filePattern =
+${logDir}/app-%d{yyyy-MM-dd}-%i.log.gz<br/>
+appender.rolling.layout.type = PatternLayout<br/>
+appender.rolling.layout.pattern = ${pattern}<br/>
+appender.rolling.policies.type = Policies<br/>
+appender.rolling.policies.time.type = TimeBasedTriggeringPolicy<br/>
+appender.rolling.policies.time.interval = 1<br/>
+appender.rolling.policies.size.type = SizeBasedTriggeringPolicy<br/>
+appender.rolling.policies.size.size = 100MB<br/>
+appender.rolling.strategy.type = DefaultRolloverStrategy<br/>
+appender.rolling.strategy.max = 30<br/>
+<br/>
+rootLogger.level = INFO<br/>
+rootLogger.appenderRef.rolling.ref = ROLLING</p>
+<h2 id="prop-10-移行手順・検証観点">10. 移行手順・検証観点</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+<col style="width: 25%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>工程</strong></th>
+<th><strong>作業内容</strong></th>
+<th><strong>成果物</strong></th>
+<th><strong>確認観点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1. 棚卸し</td>
+<td>既存 log4j.properties の rootLogger / logger / appender / layout /
+filter / rolling / 変数を分類</td>
+<td>棚卸し表</td>
+<td>未使用 Appender、重複 Logger、additivity を確認。</td>
+</tr>
+<tr class="even">
+<td>2. 変換設計</td>
+<td>Appender id、Logger id、property 名、filePattern を決める</td>
+<td>変換設計書</td>
+<td>命名規則とログファイル名を標準化。</td>
+</tr>
+<tr class="odd">
+<td>3. 機械変換</td>
+<td>基本キーを log4j2.properties に変換</td>
+<td>初版 log4j2.properties</td>
+<td>単純置換ではなく構造変換。</td>
+</tr>
+<tr class="even">
+<td>4. 手修正</td>
+<td>RollingFile、Filter、変数、charset、custom 部品を補正</td>
+<td>レビュー版 log4j2.properties</td>
+<td>Rolling と Filter は重点確認。</td>
+</tr>
+<tr class="odd">
+<td>5. 起動確認</td>
+<td>Log4j 2 の設定として読み込まれるか確認</td>
+<td>起動ログ</td>
+<td>status=DEBUG で設定読込を確認してもよい。</td>
+</tr>
+<tr class="even">
+<td>6. 出力比較</td>
+<td>同一操作で旧ログと新ログを比較</td>
+<td>ログ差分表</td>
+<td>レベル、出力先、書式、例外、MDC/NDC。</td>
+</tr>
+<tr class="odd">
+<td>7. 運用確認</td>
+<td>ログ収集、監視、ローテーション、削除、監査を確認</td>
+<td>運用確認結果</td>
+<td>Splunk / Fluentd / Logstash 等の parser 互換。</td>
+</tr>
+<tr class="even">
+<td>8. 依存整理</td>
+<td>log4j-1.2.jar の除去、Log4j 2 依存の確定</td>
+<td>依存関係一覧</td>
+<td>旧 jar 残存、bridge 恒久利用を避ける。</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="prop-101-変換後チェックリスト">10.1 変換後チェックリスト</h3>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>カテゴリ</strong></th>
+<th><strong>チェック項目</strong></th>
+<th><strong>OK 条件</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>設定読込</td>
+<td>log4j2.properties が読み込まれている</td>
+<td>起動時に Log4j 2 設定が有効。旧 log4j.properties
+に依存していない。</td>
+</tr>
+<tr class="even">
+<td>Root Logger</td>
+<td>rootLogger.level と AppenderRef が正しい</td>
+<td>旧 rootLogger / rootCategory と同等。</td>
+</tr>
+<tr class="odd">
+<td>Logger</td>
+<td>個別 logger.name / level が正しい</td>
+<td>パッケージ単位のログ量が旧環境と同等。</td>
+</tr>
+<tr class="even">
+<td>Additivity</td>
+<td>additivity=false が移行されている</td>
+<td>二重出力が発生しない。</td>
+</tr>
+<tr class="odd">
+<td>AppenderRef</td>
+<td>ref が appender.&lt;id&gt;.name と一致</td>
+<td>ログ欠落がない。</td>
+</tr>
+<tr class="even">
+<td>Rolling</td>
+<td>fileName / filePattern / policies / strategy が妥当</td>
+<td>サイズ、日次、世代数、ファイル名が旧運用と整合。</td>
+</tr>
+<tr class="odd">
+<td>Layout</td>
+<td>layout.pattern が旧 pattern と同等</td>
+<td>ログ収集・監視基盤の parser が通る。</td>
+</tr>
+<tr class="even">
+<td>変数</td>
+<td>${sys:...} / ${env:...} が正しい</td>
+<td>パス解決失敗がない。</td>
+</tr>
+<tr class="odd">
+<td>Filter</td>
+<td>onMatch / onMismatch の意味が維持されている</td>
+<td>必要ログが出て、不要ログが抑止される。</td>
+</tr>
+<tr class="even">
+<td>文字コード</td>
+<td>charset が必要に応じて指定されている</td>
+<td>日本語ログが文字化けしない。</td>
+</tr>
+<tr class="odd">
+<td>例外ログ</td>
+<td>StackTrace の出力が同等</td>
+<td>障害解析ルールに影響がない。</td>
+</tr>
+<tr class="even">
+<td>依存関係</td>
+<td>旧 log4j-1.2.jar が除去されている</td>
+<td>脆弱性・競合が残らない。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-11-properties-形式維持時の設計判断">11. properties
+形式維持時の設計判断</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+<col style="width: 33%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>判断項目</strong></th>
+<th><strong>properties 維持で問題ない条件</strong></th>
+<th><strong>XML 化を再検討すべき条件</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Appender 数</td>
+<td>Console / File / RollingFile 程度</td>
+<td>Appender が多い、ネストが深い、Filter が複雑。</td>
+</tr>
+<tr class="even">
+<td>Rolling</td>
+<td>単純なサイズまたは日次</td>
+<td>複合 rolling、複数出力先、特殊な削除条件。</td>
+</tr>
+<tr class="odd">
+<td>Filter</td>
+<td>Threshold 程度</td>
+<td>複数 Filter の chain、ScriptFilter、独自 Filter。</td>
+</tr>
+<tr class="even">
+<td>レビュー性</td>
+<td>運用チームが properties に慣れている</td>
+<td>設計レビューで構造が見えづらい。</td>
+</tr>
+<tr class="odd">
+<td>監査・証跡</td>
+<td>ログ形式が単純</td>
+<td>監査ログ、証跡ログ、不正検知ログなど厳密性が高い。</td>
+</tr>
+<tr class="even">
+<td>カスタム部品</td>
+<td>なし</td>
+<td>カスタム Appender / Layout / Filter がある。</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="prop-12-参考情報">12. 参考情報</h2>
+<div class="table-wrap"><table>
+<colgroup>
+<col style="width: 50%"/>
+<col style="width: 50%"/>
+</colgroup>
+<thead>
+<tr class="header">
+<th><strong>資料</strong></th>
+<th><strong>URL</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Apache Log4j: Migrating from Log4j 1</td>
+<td>https://logging.apache.org/log4j/2.x/migrate-from-log4j1.html</td>
+</tr>
+<tr class="even">
+<td>Apache Log4j: Configuration file</td>
+<td>https://logging.apache.org/log4j/2.x/manual/configuration.html</td>
+</tr>
+<tr class="odd">
+<td>Apache Log4j: Appenders</td>
+<td>https://logging.apache.org/log4j/2.x/manual/appenders.html</td>
+</tr>
+<tr class="even">
+<td>Apache Log4j: Rolling file appenders</td>
+<td>https://logging.apache.org/log4j/2.x/manual/appenders/rolling-file.html</td>
+</tr>
+<tr class="odd">
+<td>Apache Log4j: Filters</td>
+<td>https://logging.apache.org/log4j/2.x/manual/filters.html</td>
+</tr>
+<tr class="even">
+<td>Apache Log4j 1.x manual</td>
+<td>https://logging.apache.org/log4j/1.x/manual.html</td>
+</tr>
+</tbody>
+</table></div>
+
+  </section>
+  <p class="footer">Generated for migration planning and review.</p>
+</main>
+</body>
+</html>
