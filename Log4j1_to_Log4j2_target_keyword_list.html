@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Log4j 1.xから2.xへの変換対象キーワード一覧</title>
+<style>
+:root {
+  --bg: #f7f8fb;
+  --card: #ffffff;
+  --text: #202124;
+  --muted: #5f6368;
+  --line: #dfe3ea;
+  --head: #1f4e79;
+  --head2: #eef5fb;
+  --code: #f5f7f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+}
+header {
+  background: linear-gradient(135deg, #183a59, #2f6f9f);
+  color: white;
+  padding: 36px 44px;
+}
+header h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
+}
+header p {
+  margin: 0;
+  color: #e7f0f7;
+}
+main {
+  max-width: 1200px;
+  margin: 24px auto 56px;
+  padding: 0 20px;
+}
+.card, section {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin: 18px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+h2 {
+  color: var(--head);
+  border-bottom: 2px solid var(--head2);
+  padding-bottom: 8px;
+  margin-top: 0;
+}
+h3 {
+  color: var(--head);
+}
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 14px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1050px;
+  background: white;
+}
+th, td {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 8px 10px;
+  vertical-align: top;
+  font-size: 13px;
+}
+th {
+  background: var(--head2);
+  color: #16324a;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+td:first-child, th:first-child {
+  white-space: nowrap;
+  font-weight: 700;
+}
+tr:nth-child(even) td {
+  background: #fbfcfe;
+}
+code, pre {
+  font-family: Consolas, "Courier New", monospace;
+}
+pre {
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  overflow-x: auto;
+}
+nav ul {
+  columns: 2;
+  padding-left: 24px;
+}
+nav a {
+  color: #1f4e79;
+  text-decoration: none;
+}
+nav a:hover {
+  text-decoration: underline;
+}
+.badge {
+  display: inline-block;
+  background: #eef5fb;
+  border: 1px solid #cfe2f3;
+  color: #1f4e79;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+footer {
+  color: var(--muted);
+  text-align: center;
+  padding: 24px;
+}
+@media print {
+  body { background: white; }
+  header { background: white; color: black; padding: 12px 0; }
+  main { max-width: none; margin: 0; padding: 0; }
+  .card, section { box-shadow: none; border: none; page-break-inside: avoid; }
+  .table-wrap { overflow: visible; }
+  table { min-width: 0; font-size: 10px; }
+  th, td { font-size: 9px; padding: 4px; }
+  nav { display: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Log4j 1.xから2.xへの変換対象キーワード一覧</h1>
+  <p>ExcelマクロでLog4j 1.x設定ファイルや関連ファイルを棚卸しするための検出ルール一覧です。</p>
+</header>
+<main>
+  <div class="card">
+    <h2>概要</h2>
+    <p>対象は主に <code>log4j.properties</code>、<code>log4j.xml</code>、派生設定ファイル、依存関係ファイル、Javaソース内のLog4j 1.x API参照です。</p>
+    <p><span class="badge">Yes</span> はLog4j 2変換後に原則ゼロ件を目指すルール、<span class="badge">Review</span> は変換後も残る可能性がある確認対象です。</p>
+  </div>
+  <div class="card">
+    <h2>目次</h2>
+    <nav><ul><li><a href="#sec1">推奨カラム</a></li>
+<li><a href="#sec2">1. 設定ファイル識別ルール</a></li>
+<li><a href="#sec3">2. Root Logger / Logger / Category</a></li>
+<li><a href="#sec4">3. Appender 定義</a></li>
+<li><a href="#sec5">4. Appender パラメータ</a></li>
+<li><a href="#sec6">5. RollingFile / DailyRollingFile</a></li>
+<li><a href="#sec7">6. Layout</a></li>
+<li><a href="#sec8">7. PatternLayout 変換注意キーワード</a></li>
+<li><a href="#sec9">8. Filter</a></li>
+<li><a href="#sec10">9. 変数・プロパティ参照</a></li>
+<li><a href="#sec11">10. XML構造変換</a></li>
+<li><a href="#sec12">11. properties構造変換</a></li>
+<li><a href="#sec13">12. 依存関係・外部参照ファイル用キーワード</a></li>
+<li><a href="#sec14">13. Excelマクロ用CSV化しやすい最小セット</a></li>
+<li><a href="#sec15">14. マクロ化する時の判定方針</a></li></ul></nav>
+  </div>
+  <section id="sec1"><h2>推奨カラム</h2>
+<p>Excelマクロでチェックルール化しやすいように、以下の列を持つ一覧として管理することを推奨します。</p>
+<div class="table-wrap"><table>
+<thead><tr><th>列名</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>RuleId</td><td>検出ルールID</td></tr>
+<tr><td>Category</td><td>分類</td></tr>
+<tr><td>TargetFormat</td><td>対象形式</td></tr>
+<tr><td>SearchType</td><td>Contains / Regex / ClassName</td></tr>
+<tr><td>KeywordOrRegex</td><td>検索キーワードまたは正規表現</td></tr>
+<tr><td>Severity</td><td>High / Medium / Low</td></tr>
+<tr><td>変換後ゼロ件判定</td><td>変換後にゼロ件になるべきか、レビュー対象か</td></tr>
+<tr><td>Log4j1Meaning</td><td>Log4j 1.xでの意味</td></tr>
+<tr><td>Log4j2Action</td><td>Log4j 2.xでの対応</td></tr>
+<tr><td>Note</td><td>補足</td></tr>
+</tbody></table></div></section><section id="sec2"><h2>1. 設定ファイル識別ルール</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>CFG001</td><td>設定ファイル名</td><td>FileName</td><td>Regex</td><td>(^|[\\/])log4j\.properties$</td><td>High</td><td>Yes</td><td>Log4j 1.x properties設定</td><td>log4j2.properties または log4j2.xml へ変換</td><td>変換後は残さない</td></tr>
+<tr><td>CFG002</td><td>設定ファイル名</td><td>FileName</td><td>Regex</td><td>(^|[\\/])log4j\.xml$</td><td>High</td><td>Yes</td><td>Log4j 1.x XML設定</td><td>log4j2.xml へ変換</td><td>変換後は残さない</td></tr>
+<tr><td>CFG003</td><td>設定ファイル名</td><td>FileName</td><td>Regex</td><td>log4j-.*\.properties$</td><td>Medium</td><td>Review</td><td>Log4j 1.x派生設定の可能性</td><td>内容確認</td><td>環境別設定ファイルで多い</td></tr>
+<tr><td>CFG004</td><td>設定ファイル名</td><td>FileName</td><td>Regex</td><td>log4j-.*\.xml$</td><td>Medium</td><td>Review</td><td>Log4j 1.x派生設定の可能性</td><td>内容確認</td><td>環境別設定ファイルで多い</td></tr>
+<tr><td>CFG005</td><td>XML DTD</td><td>XML</td><td>Contains</td><td>log4j.dtd</td><td>High</td><td>Yes</td><td>Log4j 1.x XML DTD</td><td>Log4j 2 XMLでは削除</td><td>&lt;!DOCTYPE log4j:configuration SYSTEM &quot;log4j.dtd&quot;&gt;</td></tr>
+<tr><td>CFG006</td><td>XML namespace</td><td>XML</td><td>Contains</td><td>http://jakarta.apache.org/log4j/</td><td>High</td><td>Yes</td><td>Log4j 1.x namespace</td><td>Log4j 2では通常不要</td><td>log4j:configuration とセットで出る</td></tr>
+</tbody></table></div></section><section id="sec3"><h2>2. Root Logger / Logger / Category</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>LOG001</td><td>RootLogger</td><td>properties</td><td>Regex</td><td>^\s*log4j\.rootLogger\s*=</td><td>High</td><td>Yes</td><td>Root Logger定義</td><td>rootLogger.level と rootLogger.appenderRef.* へ変換</td><td>properties形式維持時</td></tr>
+<tr><td>LOG002</td><td>RootLogger</td><td>properties</td><td>Regex</td><td>^\s*log4j\.rootCategory\s*=</td><td>High</td><td>Yes</td><td>Root Logger旧別名</td><td>rootLogger.level へ変換</td><td>rootLogger に統一</td></tr>
+<tr><td>LOG003</td><td>Logger</td><td>properties</td><td>Regex</td><td>^\s*log4j\.logger\.</td><td>High</td><td>Yes</td><td>個別Logger定義</td><td>logger.&lt;id&gt;.name / logger.&lt;id&gt;.level へ変換</td><td>AppenderRef分解が必要</td></tr>
+<tr><td>LOG004</td><td>Logger</td><td>properties</td><td>Regex</td><td>^\s*log4j\.category\.</td><td>High</td><td>Yes</td><td>個別Category定義</td><td>Logger へ変換</td><td>Log4j 2ではLoggerへ統一</td></tr>
+<tr><td>LOG005</td><td>Additivity</td><td>properties</td><td>Regex</td><td>^\s*log4j\.additivity\.</td><td>High</td><td>Yes</td><td>親Loggerへの伝播制御</td><td>logger.&lt;id&gt;.additivity へ変換</td><td>漏れると二重出力</td></tr>
+<tr><td>LOG006</td><td>Threshold</td><td>properties</td><td>Regex</td><td>^\s*log4j\.threshold\s*=</td><td>Medium</td><td>Yes</td><td>全体閾値</td><td>ThresholdFilter 等へ変換</td><td>Logger levelとは意味が違う</td></tr>
+<tr><td>LOG007</td><td>XML root</td><td>XML</td><td>Regex</td><td>&lt;\s*root\s*&gt;</td><td>High</td><td>Yes</td><td>Root Logger</td><td>&lt;Root level=&quot;...&quot;&gt; へ変換</td><td>大文字化・level属性化</td></tr>
+<tr><td>LOG008</td><td>XML category</td><td>XML</td><td>Regex</td><td>&lt;\s*category\b</td><td>High</td><td>Yes</td><td>Category定義</td><td>&lt;Logger&gt; へ変換</td><td>additivity保持</td></tr>
+<tr><td>LOG009</td><td>XML logger</td><td>XML</td><td>Regex</td><td>&lt;\s*logger\b</td><td>High</td><td>Yes</td><td>Logger定義</td><td>&lt;Logger&gt; へ変換</td><td>Log4j 2の構造へ</td></tr>
+<tr><td>LOG010</td><td>XML priority</td><td>XML</td><td>Regex</td><td>&lt;\s*priority\b</td><td>High</td><td>Yes</td><td>ログレベル</td><td>level=&quot;...&quot; へ変換</td><td>priorityは使わない</td></tr>
+<tr><td>LOG011</td><td>XML level</td><td>XML</td><td>Regex</td><td>&lt;\s*level\b</td><td>High</td><td>Yes</td><td>ログレベル</td><td>level=&quot;...&quot; へ変換</td><td>XMLでは属性化</td></tr>
+<tr><td>LOG012</td><td>XML appender-ref</td><td>XML</td><td>Regex</td><td>&lt;\s*appender-ref\b</td><td>High</td><td>Yes</td><td>Appender参照</td><td>&lt;AppenderRef&gt; へ変換</td><td>大文字小文字変更</td></tr>
+</tbody></table></div></section><section id="sec4"><h2>3. Appender 定義</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>APP001</td><td>Appender</td><td>properties</td><td>Regex</td><td>^\s*log4j\.appender\.[^.]+\s*=</td><td>High</td><td>Yes</td><td>Appender class定義</td><td>appender.&lt;id&gt;.type へ変換</td><td>class名からPlugin名へ</td></tr>
+<tr><td>APP002</td><td>Appender</td><td>XML</td><td>Regex</td><td>&lt;\s*appender\b</td><td>High</td><td>Yes</td><td>Appender要素</td><td>&lt;Appenders&gt;配下の各Appender要素へ変換</td><td>class属性は使わない</td></tr>
+<tr><td>APP003</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.ConsoleAppender</td><td>High</td><td>Yes</td><td>Console出力</td><td>Console Appenderへ変換</td><td>Targetも確認</td></tr>
+<tr><td>APP004</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.FileAppender</td><td>High</td><td>Yes</td><td>File出力</td><td>File Appenderへ変換</td><td>File→fileName</td></tr>
+<tr><td>APP005</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.RollingFileAppender</td><td>High</td><td>Yes</td><td>サイズベースRolling</td><td>RollingFile + SizeBasedTriggeringPolicy</td><td>filePattern必須</td></tr>
+<tr><td>APP006</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.DailyRollingFileAppender</td><td>High</td><td>Yes</td><td>日時ベースRolling</td><td>RollingFile + TimeBasedTriggeringPolicy</td><td>DatePattern変換</td></tr>
+<tr><td>APP007</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.AsyncAppender</td><td>High</td><td>Yes</td><td>非同期Appender</td><td>Async AppenderまたはAsync Logger</td><td>性能設計確認</td></tr>
+<tr><td>APP008</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.jdbc.JDBCAppender</td><td>High</td><td>Yes</td><td>DB出力</td><td>JDBC Appenderへ再設計</td><td>単純変換困難</td></tr>
+<tr><td>APP009</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.net.SocketAppender</td><td>High</td><td>Yes</td><td>Socket出力</td><td>Socket Appender</td><td>host/port変換</td></tr>
+<tr><td>APP010</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.net.SMTPAppender</td><td>Medium</td><td>Yes</td><td>メール通知</td><td>SMTP Appender</td><td>TLS/認証確認</td></tr>
+<tr><td>APP011</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.net.SyslogAppender</td><td>Medium</td><td>Yes</td><td>Syslog出力</td><td>Syslog Appender</td><td>facility/format確認</td></tr>
+<tr><td>APP012</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.varia.NullAppender</td><td>Low</td><td>Yes</td><td>Null出力</td><td>Null Appender</td><td>抑止用途</td></tr>
+<tr><td>APP013</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.net.JMSAppender</td><td>Medium</td><td>Yes</td><td>JMS出力</td><td>JMS Appender</td><td>依存関係確認</td></tr>
+<tr><td>APP014</td><td>AppenderClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.rewrite.RewriteAppender</td><td>Medium</td><td>Yes</td><td>Rewrite</td><td>Rewrite Appender</td><td>Policy再設計</td></tr>
+<tr><td>APP015</td><td>AppenderClass</td><td>both</td><td>Regex</td><td>org\.apache\.log4j\.[A-Za-z0-9_.]*Appender</td><td>High</td><td>Yes</td><td>Log4j 1.x標準/拡張Appender</td><td>Log4j 2 Appenderへ変換</td><td>汎用検出用</td></tr>
+<tr><td>APP016</td><td>CustomAppender</td><td>both</td><td>Regex</td><td>(?i)(Appender|appender).*=.*\b[A-Za-z0-9_.]+Appender\b</td><td>Medium</td><td>Review</td><td>独自Appenderの可能性</td><td>Log4j 2 Plugin化</td><td>org.apache.log4j 以外なら要確認</td></tr>
+</tbody></table></div></section><section id="sec5"><h2>4. Appender パラメータ</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>PRM001</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.File\s*=</td><td>High</td><td>Yes</td><td>出力ファイル</td><td>fileName</td><td>Rolling/File共通</td></tr>
+<tr><td>PRM002</td><td>AppenderParam</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]File[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>出力ファイル</td><td>fileName属性</td><td>XML用</td></tr>
+<tr><td>PRM003</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.Append\s*=</td><td>Medium</td><td>Yes</td><td>追記有無</td><td>append</td><td>true/false</td></tr>
+<tr><td>PRM004</td><td>AppenderParam</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]Append[\&quot;&#x27;]</td><td>Medium</td><td>Yes</td><td>追記有無</td><td>append属性</td><td>XML用</td></tr>
+<tr><td>PRM005</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.ImmediateFlush\s*=</td><td>Medium</td><td>Yes</td><td>即時flush</td><td>immediateFlush</td><td>性能/障害時ログ保証</td></tr>
+<tr><td>PRM006</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.BufferedIO\s*=</td><td>Medium</td><td>Yes</td><td>Buffered I/O</td><td>bufferedIo</td><td>Log4j 2側仕様確認</td></tr>
+<tr><td>PRM007</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.BufferSize\s*=</td><td>Low</td><td>Yes</td><td>バッファサイズ</td><td>bufferSize</td><td>単位確認</td></tr>
+<tr><td>PRM008</td><td>AppenderParam</td><td>properties</td><td>Regex</td><td>\.Threshold\s*=</td><td>High</td><td>Yes</td><td>Appender閾値</td><td>ThresholdFilter</td><td>AppenderRef levelでも代替可</td></tr>
+<tr><td>PRM009</td><td>AppenderParam</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]Threshold[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>Appender閾値</td><td>ThresholdFilter</td><td>XML用</td></tr>
+<tr><td>PRM010</td><td>ConsoleParam</td><td>properties</td><td>Regex</td><td>\.Target\s*=\s*System\.out</td><td>Medium</td><td>Yes</td><td>標準出力</td><td>target=SYSTEM_OUT</td><td>値変換</td></tr>
+<tr><td>PRM011</td><td>ConsoleParam</td><td>properties</td><td>Regex</td><td>\.Target\s*=\s*System\.err</td><td>Medium</td><td>Yes</td><td>標準エラー</td><td>target=SYSTEM_ERR</td><td>値変換</td></tr>
+<tr><td>PRM012</td><td>ConsoleParam</td><td>XML</td><td>Regex</td><td>name=[\&quot;&#x27;]Target[\&quot;&#x27;]\s+value=[\&quot;&#x27;]System\.out[\&quot;&#x27;]</td><td>Medium</td><td>Yes</td><td>標準出力</td><td>SYSTEM_OUT</td><td>XML用</td></tr>
+<tr><td>PRM013</td><td>ConsoleParam</td><td>XML</td><td>Regex</td><td>name=[\&quot;&#x27;]Target[\&quot;&#x27;]\s+value=[\&quot;&#x27;]System\.err[\&quot;&#x27;]</td><td>Medium</td><td>Yes</td><td>標準エラー</td><td>SYSTEM_ERR</td><td>XML用</td></tr>
+<tr><td>PRM014</td><td>XMLParam</td><td>XML</td><td>Regex</td><td>&lt;\s*param\b</td><td>High</td><td>Yes</td><td>Log4j 1.x param設定</td><td>属性または子要素へ変換</td><td>汎用検出</td></tr>
+</tbody></table></div></section><section id="sec6"><h2>5. RollingFile / DailyRollingFile</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>ROL001</td><td>Rolling</td><td>properties</td><td>Regex</td><td>\.MaxFileSize\s*=</td><td>High</td><td>Yes</td><td>サイズローテーション</td><td>SizeBasedTriggeringPolicy size</td><td>Policies配下へ</td></tr>
+<tr><td>ROL002</td><td>Rolling</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]MaxFileSize[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>サイズローテーション</td><td>SizeBasedTriggeringPolicy</td><td>XML用</td></tr>
+<tr><td>ROL003</td><td>Rolling</td><td>properties</td><td>Regex</td><td>\.MaxBackupIndex\s*=</td><td>High</td><td>Yes</td><td>世代数</td><td>DefaultRolloverStrategy max</td><td>fileIndexも検討</td></tr>
+<tr><td>ROL004</td><td>Rolling</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]MaxBackupIndex[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>世代数</td><td>DefaultRolloverStrategy max</td><td>XML用</td></tr>
+<tr><td>ROL005</td><td>DailyRolling</td><td>properties</td><td>Regex</td><td>\.DatePattern\s*=</td><td>High</td><td>Yes</td><td>日付ローテーション</td><td>filePattern + TimeBasedTriggeringPolicy</td><td>完全一致要検証</td></tr>
+<tr><td>ROL006</td><td>DailyRolling</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]DatePattern[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>日付ローテーション</td><td>filePattern + TimeBasedTriggeringPolicy</td><td>XML用</td></tr>
+<tr><td>ROL007</td><td>Rolling</td><td>both</td><td>Contains</td><td>ExternallyRolledFileAppender</td><td>High</td><td>Yes</td><td>外部トリガーロール</td><td>個別設計</td><td>標準変換困難</td></tr>
+<tr><td>ROL008</td><td>Rolling</td><td>both</td><td>Regex</td><td>\bRollingFileAppender\b|\bDailyRollingFileAppender\b</td><td>High</td><td>Yes</td><td>Rolling系全般</td><td>RollingFileへ変換</td><td>まとめ検出用</td></tr>
+</tbody></table></div></section><section id="sec7"><h2>6. Layout</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>LAY001</td><td>Layout</td><td>properties</td><td>Regex</td><td>\.layout\s*=</td><td>High</td><td>Yes</td><td>Layout class定義</td><td>layout.typeへ変換</td><td>PatternLayout等</td></tr>
+<tr><td>LAY002</td><td>Layout</td><td>XML</td><td>Regex</td><td>&lt;\s*layout\b</td><td>High</td><td>Yes</td><td>Layout要素</td><td>Log4j 2 Layout要素へ</td><td>Appender配下</td></tr>
+<tr><td>LAY003</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.PatternLayout</td><td>High</td><td>Yes</td><td>PatternLayout</td><td>PatternLayout</td><td>pattern属性へ</td></tr>
+<tr><td>LAY004</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.EnhancedPatternLayout</td><td>Medium</td><td>Yes</td><td>拡張PatternLayout</td><td>PatternLayout</td><td>パターン差異確認</td></tr>
+<tr><td>LAY005</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.SimpleLayout</td><td>Medium</td><td>Yes</td><td>SimpleLayout</td><td>PatternLayout</td><td>%p - %m%n相当</td></tr>
+<tr><td>LAY006</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.TTCCLayout</td><td>Medium</td><td>Yes</td><td>TTCCLayout</td><td>PatternLayout</td><td>公式変換パターン確認</td></tr>
+<tr><td>LAY007</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.HTMLLayout</td><td>Low</td><td>Yes</td><td>HTML出力</td><td>HtmlLayout</td><td>出力差異確認</td></tr>
+<tr><td>LAY008</td><td>LayoutClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.xml.XMLLayout</td><td>High</td><td>Yes</td><td>XMLログ出力</td><td>厳密互換は要検討</td><td>Log4j 2 Coreの標準とは差異注意</td></tr>
+<tr><td>LAY009</td><td>LayoutParam</td><td>properties</td><td>Regex</td><td>\.layout\.ConversionPattern\s*=</td><td>High</td><td>Yes</td><td>出力パターン</td><td>layout.pattern</td><td>properties用</td></tr>
+<tr><td>LAY010</td><td>LayoutParam</td><td>XML</td><td>Regex</td><td>&lt;\s*param\s+name=[\&quot;&#x27;]ConversionPattern[\&quot;&#x27;]</td><td>High</td><td>Yes</td><td>出力パターン</td><td>pattern属性</td><td>XML用</td></tr>
+<tr><td>LAY011</td><td>CustomLayout</td><td>both</td><td>Regex</td><td>\b[A-Za-z0-9_.]+Layout\b</td><td>Medium</td><td>Review</td><td>独自Layoutの可能性</td><td>Log4j 2 Plugin化</td><td>標準以外を確認</td></tr>
+</tbody></table></div></section><section id="sec8"><h2>7. PatternLayout 変換注意キーワード</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>PAT001</td><td>Pattern</td><td>both</td><td>Contains</td><td>%x</td><td>Medium</td><td>Review</td><td>NDC出力</td><td>%x または %ndc確認</td><td>厳密互換確認</td></tr>
+<tr><td>PAT002</td><td>Pattern</td><td>both</td><td>Contains</td><td>%X</td><td>Medium</td><td>Review</td><td>MDC出力</td><td>%X または %properties確認</td><td>監査ログ注意</td></tr>
+<tr><td>PAT003</td><td>Pattern</td><td>both</td><td>Contains</td><td>%p</td><td>Low</td><td>Review</td><td>Level出力</td><td>通常は維持</td><td>カスタムLevelでは注意</td></tr>
+<tr><td>PAT004</td><td>Pattern</td><td>both</td><td>Contains</td><td>%l</td><td>Medium</td><td>Review</td><td>Location情報</td><td>維持可だが性能注意</td><td>高コスト</td></tr>
+<tr><td>PAT005</td><td>Pattern</td><td>both</td><td>Contains</td><td>%C</td><td>Medium</td><td>Review</td><td>呼び出し元クラス</td><td>維持可だが性能注意</td><td>高コスト</td></tr>
+<tr><td>PAT006</td><td>Pattern</td><td>both</td><td>Contains</td><td>%M</td><td>Medium</td><td>Review</td><td>メソッド名</td><td>維持可だが性能注意</td><td>高コスト</td></tr>
+<tr><td>PAT007</td><td>Pattern</td><td>both</td><td>Contains</td><td>%L</td><td>Medium</td><td>Review</td><td>行番号</td><td>維持可だが性能注意</td><td>高コスト</td></tr>
+<tr><td>PAT008</td><td>Pattern</td><td>both</td><td>Contains</td><td>%F</td><td>Medium</td><td>Review</td><td>ファイル名</td><td>維持可だが性能注意</td><td>高コスト</td></tr>
+</tbody></table></div></section><section id="sec9"><h2>8. Filter</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>FIL001</td><td>Filter</td><td>properties</td><td>Regex</td><td>\.filter\.</td><td>High</td><td>Yes</td><td>Filter定義</td><td>Log4j 2 Filterへ変換</td><td>Appender/Logger配下</td></tr>
+<tr><td>FIL002</td><td>Filter</td><td>XML</td><td>Regex</td><td>&lt;\s*filter\b</td><td>High</td><td>Yes</td><td>Filter要素</td><td>Log4j 2 Filterへ変換</td><td>&lt;Filters&gt;化も検討</td></tr>
+<tr><td>FIL003</td><td>FilterClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.varia.LevelMatchFilter</td><td>High</td><td>Yes</td><td>Level完全一致Filter</td><td>LevelMatchFilter</td><td>onMatch/onMismatch要変換</td></tr>
+<tr><td>FIL004</td><td>FilterClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.varia.LevelRangeFilter</td><td>High</td><td>Yes</td><td>Level範囲Filter</td><td>LevelRangeFilter</td><td>min/max変換</td></tr>
+<tr><td>FIL005</td><td>FilterClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.varia.StringMatchFilter</td><td>Medium</td><td>Yes</td><td>文字列一致Filter</td><td>RegexFilter等</td><td>部分一致差異注意</td></tr>
+<tr><td>FIL006</td><td>FilterClass</td><td>both</td><td>Contains</td><td>org.apache.log4j.varia.DenyAllFilter</td><td>High</td><td>Yes</td><td>最終DENY</td><td>Filter chainで再現</td><td>評価順注意</td></tr>
+<tr><td>FIL007</td><td>FilterParam</td><td>both</td><td>Contains</td><td>AcceptOnMatch</td><td>High</td><td>Yes</td><td>Match時の動作</td><td>onMatch / onMismatchへ変換</td><td>true/falseの解釈注意</td></tr>
+<tr><td>FIL008</td><td>FilterParam</td><td>both</td><td>Contains</td><td>LevelToMatch</td><td>High</td><td>Yes</td><td>対象Level</td><td>level属性</td><td></td></tr>
+<tr><td>FIL009</td><td>FilterParam</td><td>both</td><td>Contains</td><td>LevelMin</td><td>High</td><td>Yes</td><td>最小Level</td><td>minLevel</td><td></td></tr>
+<tr><td>FIL010</td><td>FilterParam</td><td>both</td><td>Contains</td><td>LevelMax</td><td>High</td><td>Yes</td><td>最大Level</td><td>maxLevel</td><td></td></tr>
+<tr><td>FIL011</td><td>FilterParam</td><td>both</td><td>Contains</td><td>StringToMatch</td><td>Medium</td><td>Yes</td><td>対象文字列</td><td>Regex等へ</td><td></td></tr>
+<tr><td>FIL012</td><td>CustomFilter</td><td>both</td><td>Regex</td><td>\b[A-Za-z0-9_.]+Filter\b</td><td>Medium</td><td>Review</td><td>独自Filterの可能性</td><td>Log4j 2 Plugin化</td><td>標準外を確認</td></tr>
+</tbody></table></div></section><section id="sec10"><h2>9. 変数・プロパティ参照</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>VAR001</td><td>変数</td><td>both</td><td>Regex</td><td>\$\{[A-Za-z0-9_.-]+\}</td><td>Medium</td><td>Review</td><td>変数参照</td><td>${sys:...} / ${env:...}等へ確認</td><td>システムプロパティならsys</td></tr>
+<tr><td>VAR002</td><td>変数</td><td>both</td><td>Regex</td><td>\$\{log\.dir\}</td><td>High</td><td>Review</td><td>ログ出力先変数</td><td>${sys:log.dir}等へ</td><td>よくある</td></tr>
+<tr><td>VAR003</td><td>変数</td><td>both</td><td>Regex</td><td>\$\{user\.home\}</td><td>Medium</td><td>Review</td><td>JVM system property</td><td>${sys:user.home}</td><td></td></tr>
+<tr><td>VAR004</td><td>変数</td><td>both</td><td>Regex</td><td>\$\{catalina\.base\}</td><td>Medium</td><td>Review</td><td>Tomcat system property</td><td>${sys:catalina.base}</td><td></td></tr>
+<tr><td>VAR005</td><td>変数</td><td>both</td><td>Regex</td><td>\$\{env\.</td><td>Low</td><td>Review</td><td>独自環境変数風</td><td>${env:...}へ確認</td><td>旧設定の独自展開か確認</td></tr>
+</tbody></table></div></section><section id="sec11"><h2>10. XML構造変換</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>XML001</td><td>XML構造</td><td>XML</td><td>Regex</td><td>&lt;\s*log4j:configuration\b</td><td>High</td><td>Yes</td><td>Log4j 1.x XMLルート</td><td>&lt;Configuration&gt;</td><td>namespace削除</td></tr>
+<tr><td>XML002</td><td>XML構造</td><td>XML</td><td>Regex</td><td>&lt;/\s*log4j:configuration\s*&gt;</td><td>High</td><td>Yes</td><td>Log4j 1.x XML終了タグ</td><td>&lt;/Configuration&gt;</td><td></td></tr>
+<tr><td>XML003</td><td>XML構造</td><td>XML</td><td>Regex</td><td>debug\s*=\s*[\&quot;&#x27;]true[\&quot;&#x27;]</td><td>Medium</td><td>Review</td><td>Log4j内部debug</td><td>status=&quot;DEBUG&quot;</td><td>完全同義ではない</td></tr>
+<tr><td>XML004</td><td>XML構造</td><td>XML</td><td>Regex</td><td>reset\s*=\s*[\&quot;&#x27;]true[\&quot;&#x27;]</td><td>Low</td><td>Review</td><td>設定reset</td><td>原則削除/個別判断</td><td></td></tr>
+<tr><td>XML005</td><td>XML構造</td><td>XML</td><td>Regex</td><td>threshold\s*=\s*[\&quot;&#x27;][A-Z]+[\&quot;&#x27;]</td><td>Medium</td><td>Review</td><td>全体threshold</td><td>ThresholdFilter</td><td></td></tr>
+</tbody></table></div></section><section id="sec12"><h2>11. properties構造変換</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>PROP001</td><td>properties構造</td><td>properties</td><td>Regex</td><td>^\s*log4j\.</td><td>High</td><td>Yes</td><td>Log4j 1.x properties設定</td><td>status / appender.* / logger.* / rootLogger.*へ変換</td><td>変換後ゼロ件判定の主ルール</td></tr>
+<tr><td>PROP002</td><td>properties構造</td><td>properties</td><td>Regex</td><td>^\s*log4j\.appender\.[^.]+\.layout\.</td><td>High</td><td>Yes</td><td>Layout詳細</td><td>appender.&lt;id&gt;.layout.*</td><td></td></tr>
+<tr><td>PROP003</td><td>properties構造</td><td>properties</td><td>Regex</td><td>^\s*log4j\.appender\.[^.]+\.filter\.</td><td>High</td><td>Yes</td><td>Filter詳細</td><td>appender.&lt;id&gt;.filter.*</td><td></td></tr>
+<tr><td>PROP004</td><td>properties構造</td><td>properties</td><td>Regex</td><td>^\s*log4j\.logger\.[^=]+=\s*[^,]+,</td><td>High</td><td>Yes</td><td>Logger + Appender指定</td><td>loggerとAppenderRefへ分解</td><td>カンマ分割</td></tr>
+<tr><td>PROP005</td><td>properties構造</td><td>properties</td><td>Regex</td><td>^\s*log4j\.rootLogger\s*=\s*[^,]+,</td><td>High</td><td>Yes</td><td>Root + Appender指定</td><td>rootLoggerとAppenderRefへ分解</td><td>カンマ分割</td></tr>
+</tbody></table></div></section><section id="sec13"><h2>12. 依存関係・外部参照ファイル用キーワード</h2><div class="table-wrap"><table>
+<thead><tr><th>RuleId</th><th>Category</th><th>TargetFormat</th><th>SearchType</th><th>KeywordOrRegex</th><th>Severity</th><th>変換後ゼロ件判定</th><th>Log4j1Meaning</th><th>Log4j2Action</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>DEP001</td><td>依存関係</td><td>pom.xml</td><td>Contains</td><td>&lt;artifactId&gt;log4j&lt;/artifactId&gt;</td><td>High</td><td>Yes</td><td>Log4j 1.x依存</td><td>Log4j 2依存へ変更</td><td>groupIdも確認</td></tr>
+<tr><td>DEP002</td><td>依存関係</td><td>pom.xml</td><td>Contains</td><td>&lt;groupId&gt;log4j&lt;/groupId&gt;</td><td>High</td><td>Yes</td><td>Log4j 1.x groupId</td><td>org.apache.logging.log4jへ</td><td></td></tr>
+<tr><td>DEP003</td><td>依存関係</td><td>Gradle</td><td>Regex</td><td>log4j:log4j</td><td>High</td><td>Yes</td><td>Log4j 1.x依存</td><td>log4j-api / log4j-coreへ</td><td></td></tr>
+<tr><td>DEP004</td><td>依存関係</td><td>any</td><td>Regex</td><td>log4j-1\.2\.[0-9]+\.jar</td><td>High</td><td>Yes</td><td>旧jar参照</td><td>除去</td><td>脆弱性・競合防止</td></tr>
+<tr><td>DEP005</td><td>依存関係</td><td>any</td><td>Regex</td><td>log4j\.properties</td><td>Medium</td><td>Review</td><td>旧設定ファイル参照</td><td>log4j2.properties/xmlへ</td><td>起動オプション等</td></tr>
+<tr><td>DEP006</td><td>依存関係</td><td>any</td><td>Regex</td><td>log4j\.xml</td><td>Medium</td><td>Review</td><td>旧設定ファイル参照</td><td>log4j2.xmlへ</td><td></td></tr>
+<tr><td>DEP007</td><td>依存関係</td><td>Java</td><td>Contains</td><td>org.apache.log4j.</td><td>High</td><td>Review</td><td>Log4j 1 API利用</td><td>Log4j 2 APIまたはBridge</td><td>設定ファイル外だが重要</td></tr>
+<tr><td>DEP008</td><td>依存関係</td><td>Java</td><td>Contains</td><td>PropertyConfigurator</td><td>High</td><td>Review</td><td>1.x properties読込</td><td>Log4j 2初期化へ</td><td></td></tr>
+<tr><td>DEP009</td><td>依存関係</td><td>Java</td><td>Contains</td><td>DOMConfigurator</td><td>High</td><td>Review</td><td>1.x XML読込</td><td>Log4j 2初期化へ</td><td></td></tr>
+</tbody></table></div></section><section id="sec14"><h2>13. Excelマクロ用CSV化しやすい最小セット</h2>
+<p>最初のExcelマクロでは、まず以下の最小セットをチェックルールとして登録するのがおすすめです。</p>
+<pre><code>RuleId,Category,TargetFormat,SearchType,KeywordOrRegex,Severity,ZeroAfterMigration,Log4j1Meaning,Log4j2Action
+CFG001,設定ファイル名,FileName,Regex,&quot;(^|[\\/])log4j\.properties$&quot;,High,Yes,Log4j1 properties設定,log4j2.propertiesまたはlog4j2.xmlへ変換
+CFG002,設定ファイル名,FileName,Regex,&quot;(^|[\\/])log4j\.xml$&quot;,High,Yes,Log4j1 XML設定,log4j2.xmlへ変換
+PROP001,properties構造,properties,Regex,&quot;^\s*log4j\.&quot;,High,Yes,Log4j1 properties設定,Log4j2形式へ変換
+XML001,XML構造,XML,Regex,&quot;&lt;\s*log4j:configuration\b&quot;,High,Yes,Log4j1 XMLルート,&lt;Configuration&gt;へ変換
+APP001,Appender,properties,Regex,&quot;^\s*log4j\.appender\.[^.]+\s*=&quot;,High,Yes,Appender class定義,appender.&lt;id&gt;.typeへ変換
+APP002,Appender,XML,Regex,&quot;&lt;\s*appender\b&quot;,High,Yes,Appender要素,Log4j2 Appender要素へ変換
+LOG001,RootLogger,properties,Regex,&quot;^\s*log4j\.rootLogger\s*=&quot;,High,Yes,Root Logger定義,rootLogger.levelへ変換
+LOG003,Logger,properties,Regex,&quot;^\s*log4j\.logger\.&quot;,High,Yes,個別Logger定義,logger.&lt;id&gt;.*へ変換
+LOG005,Additivity,properties,Regex,&quot;^\s*log4j\.additivity\.&quot;,High,Yes,親Logger伝播制御,logger.&lt;id&gt;.additivityへ変換
+LOG008,Logger,XML,Regex,&quot;&lt;\s*category\b&quot;,High,Yes,Category定義,&lt;Logger&gt;へ変換
+LOG010,XML priority,XML,Regex,&quot;&lt;\s*priority\b&quot;,High,Yes,ログレベル,level属性へ変換
+LOG012,AppenderRef,XML,Regex,&quot;&lt;\s*appender-ref\b&quot;,High,Yes,Appender参照,&lt;AppenderRef&gt;へ変換
+ROL001,Rolling,properties,Regex,&quot;\.MaxFileSize\s*=&quot;,High,Yes,サイズローテーション,SizeBasedTriggeringPolicyへ変換
+ROL003,Rolling,properties,Regex,&quot;\.MaxBackupIndex\s*=&quot;,High,Yes,世代数,DefaultRolloverStrategy maxへ変換
+ROL005,DailyRolling,properties,Regex,&quot;\.DatePattern\s*=&quot;,High,Yes,日付ローテーション,filePattern+TimeBasedTriggeringPolicyへ変換
+LAY009,Layout,properties,Regex,&quot;\.layout\.ConversionPattern\s*=&quot;,High,Yes,出力パターン,layout.patternへ変換
+FIL001,Filter,properties,Regex,&quot;\.filter\.&quot;,High,Yes,Filter定義,Log4j2 Filterへ変換
+VAR001,変数,both,Regex,&quot;\$\{[A-Za-z0-9_.-]+\}&quot;,Medium,Review,変数参照,sys/env等のLookupへ確認
+DEP004,依存関係,any,Regex,&quot;log4j-1\.2\.[0-9]+\.jar&quot;,High,Yes,旧jar参照,除去
+DEP007,Java API,Java,Contains,&quot;org.apache.log4j.&quot;,High,Review,Log4j1 API利用,Log4j2 APIまたはBridge検討
+</code></pre>
+</section><section id="sec15"><h2>14. マクロ化する時の判定方針</h2><div class="table-wrap"><table>
+<thead><tr><th>判定種別</th><th>使い方</th></tr></thead>
+<tbody>
+<tr><td>ZeroAfterMigration = Yes</td><td>Log4j 2変換後に原則ゼロ件になるべきルール</td></tr>
+<tr><td>ZeroAfterMigration = Review</td><td>変換後も残る可能性があるため、人手確認対象</td></tr>
+<tr><td>Severity = High</td><td>変換漏れが起動失敗・ログ欠落・二重出力につながる</td></tr>
+<tr><td>Severity = Medium</td><td>ログ形式・運用・監視に影響する</td></tr>
+<tr><td>Severity = Low</td><td>互換性・可読性・性能確認対象</td></tr>
+</tbody></table></div>
+<p>Excelマクロでは、まず <strong>ZeroAfterMigration = Yes の件数が0になること</strong> を完了条件にし、Review は別シートに出すのがよいです。</p>
+</section>
+</main>
+<footer>
+  Generated for Log4j 1.x to 2.x migration keyword checks.
+</footer>
+</body>
+</html>
